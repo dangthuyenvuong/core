@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:core/extension.dart';
 import 'package:core/utils/string.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -19,6 +21,7 @@ enum SortEnum {
 class Sqlite {
   static int version = 1;
   static Database? _database;
+  static FutureOr Function()? _onUpgrade;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -26,8 +29,9 @@ class Sqlite {
     return _database!;
   }
 
-  static setVersion(int value) {
+  static setVersion(int value, {FutureOr Function()? onUpgrade}) {
     version = value;
+    _onUpgrade = onUpgrade;
   }
 
   static List<SqlTable> tables = [];
@@ -43,7 +47,7 @@ class Sqlite {
   static createDatabase(Database db) async {
     for (var table in tables) {
       await db.execute('DROP TABLE IF EXISTS ${table.name}');
-      createTable(db, table);
+      await createTable(db, table);
     }
   }
 
@@ -87,10 +91,12 @@ class Sqlite {
       onCreate: (db, version) async {
         print("onCreate");
         await createDatabase(db);
+        _onUpgrade?.call();
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         print("onUpgrade");
         await createDatabase(db);
+        _onUpgrade?.call();
       },
     );
   }
@@ -171,14 +177,31 @@ const _WHERE_OPERATOR_MAP = {
 };
 
 class Where {
-  final String column;
+  final String? column;
   final Object? value;
   final WhereOperator? operator;
+  final String? raw;
+
+  static Where rawQuery(String raw) => Where(raw: raw);
+  static Where equal(String column, Object? value) =>
+      Where(column: column, operator: WhereOperator.EQUAL, value: value);
+  static Where greaterThanOrEqual(String column, Object? value) => Where(
+      column: column,
+      operator: WhereOperator.GREATER_THAN_OR_EQUAL,
+      value: value);
+  static Where lessThanOrEqual(String column, Object? value) => Where(
+      column: column, operator: WhereOperator.LESS_THAN_OR_EQUAL, value: value);
+
+  static Where $in(String column, Object? value) =>
+      Where(column: column, operator: WhereOperator.IN, value: value);
+  static Where notIn(String column, Object? value) =>
+      Where(column: column, operator: WhereOperator.NOT_IN, value: value);
 
   Where({
-    required this.column,
-    required this.value,
+    this.column,
+    this.value,
     this.operator = WhereOperator.EQUAL,
+    this.raw,
   });
 
   String toSql() {
@@ -186,6 +209,12 @@ class Where {
     // if (value is List) {
     //   return '$column ${_WHERE_OPERATOR_MAP[operator]} (${(value as List).map((e) => isString ? '"$e"' : e).join(',')})';
     // }
+
+    if (raw != null) {
+      return raw!;
+    }
+
+    assert(column != null, 'column is required');
 
     if (operator == WhereOperator.IN || operator == WhereOperator.NOT_IN) {
       isString = (value as List).any((e) => e is String);
@@ -205,8 +234,20 @@ class Where {
       return '$column LIKE "%$value%"';
     }
 
-    if (operator == WhereOperator.SEARCH) {
-      return '$QUERY_FIELD MATCH "$value*"';
+    if (operator == WhereOperator.SEARCH && value is String) {
+      var query = value as String;
+      query = query.replaceAll(RegExp(r'\s{2,}'), ' ');
+      query = removeVietnameseDiacritics(query);
+
+      // final temp = query.split(' ');
+      // if (temp.length == 2) {
+      //   query = 'NEAR("${temp[0]}*" "${temp[1]}*")';
+      // }
+      // print(_searchWhere(query));
+
+      // final _columns = ['*', 'bm25($name) as rank', ...columns];
+
+      return '$QUERY_FIELD MATCH "$query*"';
     }
 
     return '$column ${_WHERE_OPERATOR_MAP[operator] ?? '='} ${isString ? '"$value"' : value}';
@@ -247,7 +288,7 @@ class SqlTable<T> {
     return toModel(newJson);
   }
 
-  _toJson(T item) {
+  Map<String, Object?> _toJson(T item) {
     final newJson = toJson(item);
 
     for (var entry in newJson.entries.toList()) {
@@ -259,6 +300,11 @@ class SqlTable<T> {
     for (var field in fields) {
       if (field.type.contains('JSON')) {
         newJson[field.name] = jsonEncode(newJson[field.name]);
+      }
+
+      if (field.type.contains('BOOLEAN')) {
+        newJson[field.name] =
+            newJson[field.name] == true || newJson[field.name] == 1 ? 1 : 0;
       }
 
       if (field.defaultValue != null && newJson[field.name] == null) {
@@ -298,6 +344,13 @@ class SqlTable<T> {
 
   _where(List<Where> where) {
     return where.map((e) => e.toSql()).join(" AND ");
+  }
+
+  _columns({List<Where>? where}) {
+    if (where?.any((e) => e.operator == WhereOperator.SEARCH) ?? false) {
+      return ['*', 'bm25($name) as rank'];
+    }
+    return ['*'];
   }
 
   Future<Database> get database async {
@@ -357,6 +410,13 @@ ${fields.map((field) => field.name).join(', ')}, ${QUERY_FIELD}
     await db.insert(name, json);
   }
 
+  Future<void> insert(T data) async {
+    final db = await database;
+    final json = _toJson(data);
+
+    await db.insert(name, json);
+  }
+
   Future<void> createMany(List<T> data) async {
     final db = await database;
     final batch = db.batch();
@@ -380,9 +440,20 @@ ${fields.map((field) => field.name).join(', ')}, ${QUERY_FIELD}
     await batch.commit();
   }
 
-  Future<List<Map<String, dynamic>>> rawQuery(String query) async {
+  Future<void> insertMany(List<T> data) async {
     final db = await database;
-    return await db.rawQuery(query);
+    final batch = db.batch();
+    for (var item in data) {
+      final json = _toJson(item);
+      batch.insert(name, json);
+    }
+    await batch.commit();
+  }
+
+  Future<List<Map<String, dynamic>>> rawQuery(String query,
+      [List<Object?>? arguments]) async {
+    final db = await database;
+    return await db.rawQuery(query, arguments);
   }
 
   Future<List<T>> find({
@@ -391,12 +462,18 @@ ${fields.map((field) => field.name).join(', ')}, ${QUERY_FIELD}
     List<Where>? where,
   }) async {
     final db = await database;
+    // final _columns = ['*', 'bm25($name) as rank'];
+    // if (where != null) {
+    //   print(_where(where!));
+    // }
     final List<Map<String, dynamic>> maps = await db.query(
       name,
       orderBy: sort != null ? _orderBy(sort) : null,
       limit: limit,
-      where: where != null ? _where(where) : null,
+      where: where.isNotNullOrEmpty ? _where(where!) : null,
+      columns: _columns(where: where),
     );
+
     return maps.map<T>((map) => toModal(map)).toList();
   }
 
@@ -487,6 +564,20 @@ ${fields.map((field) => field.name).join(', ')}, ${QUERY_FIELD}
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  Future<void> insertOrUpdate(T data) async {
+    final db = await database;
+    final dataUpdate = _toJson(data);
+    await db.insert(name, dataUpdate,
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<void> syncLocal(T data) async {
+    final db = await database;
+    final dataUpdate = {..._toJson(data), "sync_status": "pending"};
+    await db.insert(name, dataUpdate,
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
   Future<void> update(T data) async {
     final db = await database;
     final dataUpdate = _toJson(data);
@@ -510,18 +601,19 @@ ${fields.map((field) => field.name).join(', ')}, ${QUERY_FIELD}
   }
 
   Future<List<T>> search({
-    required String query,
+    String? query,
     int limit = 1,
     List<Highlight> highlights = const [],
     List<String> columns = const [],
     String groupBy = '',
     Map<String, SortEnum>? sort,
+    List<Where>? where,
   }) async {
     final orginalQuery = query;
     // final _query = removeDiacritics(query);
 
-    query = query.replaceAll(RegExp(r'\s{2,}'), ' ');
-    query = removeVietnameseDiacritics(query);
+    query = query?.replaceAll(RegExp(r'\s{2,}'), ' ');
+    query = removeVietnameseDiacritics(query ?? '');
 
     // final temp = query.split(' ');
     // if (temp.length == 2) {
@@ -549,7 +641,8 @@ ${fields.map((field) => field.name).join(', ')}, ${QUERY_FIELD}
     var result = await db.query(
       name,
       columns: _columns,
-      where: '${QUERY_FIELD} MATCH "$query*"',
+      where:
+          '${QUERY_FIELD} MATCH "$query*" ${where.isNotNullOrEmpty ? "& ${_where(where!)}" : ''}',
       // whereArgs: [query],
       limit: limit,
       orderBy:
@@ -603,6 +696,24 @@ ${fields.map((field) => field.name).join(', ')}, ${QUERY_FIELD}
     return newData;
   }
 
+  // FutureOr<T> cacheOr(Future<T> Function() cacheFunc) async {
+  //   final data = await cache();
+  //   return data;
+  // }
+
+  Map<String, dynamic> _data = {};
+
+  Future<T> remember<T>({
+    required String key,
+    required Future<T> Function() rememberFunc,
+  }) async {
+    if (!_data.containsKey(key)) {
+      final data = await rememberFunc();
+      _data[key] = data;
+    }
+    return _data[key] as T;
+  }
+
   Future<List<T>> cacheList({
     // required String type,
     // required T Function(Map<String, dynamic>) fromJson,
@@ -612,7 +723,12 @@ ${fields.map((field) => field.name).join(', ')}, ${QUERY_FIELD}
     /// idKey default(id)
     // String idKey = 'id',
     // String? query,
+    bool isRefresh = false,
   }) async {
+    if (isRefresh) {
+      await delete();
+    }
+
     bool isExist = await this.isExist();
 
     if (isExist) {
@@ -640,7 +756,10 @@ class DateTimeConverter extends JsonConverter<DateTime, String> {
   const DateTimeConverter();
 
   @override
-  DateTime fromJson(String json) => DateTime.parse(json).toUtc();
+  DateTime fromJson(String json) => DateTime.parse(json).toLocal();
+
+  // @override
+  // DateTime fromJson(String json) => DateTime.parse(json);
 
   @override
   String toJson(DateTime object) => object.toUtc().toIso8601String();
@@ -653,14 +772,22 @@ class BooleanConverter extends JsonConverter<bool, dynamic> {
   bool fromJson(dynamic json) => json == true || json == 1;
 
   @override
-  bool toJson(dynamic object) => (object == true || object == 1) ? true : false;
+  dynamic toJson(dynamic object) =>
+      (object == true || object == 1) ? true : false;
 }
 
 class EnumConverter<T extends Enum> extends JsonConverter<T, String> {
-  const EnumConverter();
+  final T? defaultValue;
+  const EnumConverter({this.defaultValue});
 
   @override
-  T fromJson(String json) => json as T;
+  T fromJson(String? json) {
+    if ((json == null || json == '') && defaultValue != null) {
+      return defaultValue!;
+    }
+
+    return json as T;
+  }
 
   @override
   String toJson(T object) => object.name;
@@ -670,10 +797,10 @@ class ColorConverter extends JsonConverter<Color, String> {
   const ColorConverter();
 
   @override
-  Color fromJson(String json) => Color(int.parse(json));
+  Color fromJson(String json) => Color(int.parse(json, radix: 16));
 
   @override
-  String toJson(Color object) => object.toString();
+  String toJson(Color color) => color.toARGB32().toRadixString(16);
 }
 
 class IconConverter extends JsonConverter<IconData, String> {

@@ -1,10 +1,12 @@
 import 'dart:math';
-
+import 'dart:developer' as developer;
 import 'package:core/core.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+export 'package:core/utils/get.dart';
+export 'package:core/utils/svg_picture.dart';
 
 class Utils {
   static void modal({
@@ -435,3 +437,79 @@ void notiCopyToClipboard({
     ),
   );
 }
+
+class LogColor {
+  static const reset = '\x1B[0m';
+
+  static const grey = '\x1B[90m';
+  static const green = '\x1B[32m';
+  static const cyan = '\x1B[36m';
+  static const white = '\x1B[37m';
+  static const purple = '\x1B[35m';
+}
+
+String _extractLocation(String traceLine) {
+  // Ví dụ:
+  // #1      MyClass.method (package:my_app/file.dart:42:10)
+  final match = RegExp(r'\((.*)\)').firstMatch(traceLine);
+  return match?.group(1) ?? traceLine;
+}
+
+// void log(
+//   String name,
+//   dynamic value, {
+//   String? tag,
+// }) {
+//   final trace = StackTrace.current.toString().split('\n');
+
+//   // Dòng caller (thường là dòng 1 hoặc 2)
+//   final caller = trace[1];
+
+//   final location = _extractLocation(caller);
+
+//   debugPrint(
+//     '''
+// 🪵 LOG${tag != null ? ' [$tag]' : ''}
+// • $name = $value
+// • at $location
+// ''',
+//   );
+// }
+
+void log(dynamic value, {String? key}) {
+  final trace = StackTrace.current.toString().split('\n');
+  final location = _extractLocation(trace[1]);
+
+  final buffer = StringBuffer();
+
+  buffer.writeln(
+    '╭─ 🪵 LOG ───────────────────────────────',
+  );
+
+  buffer.writeln(
+    '│ 📍 at $location',
+  );
+
+  buffer.writeln(
+    '│ 🔑 ${key?.padRight(14) ?? "Value"} : $value',
+  );
+
+  buffer.writeln(
+    '╰────────────────────────────────────────',
+  );
+
+  // print(buffer.toString());
+
+  developer.log(buffer.toString(), name: 'LOG');
+}
+
+// String _parseLocation(String traceLine) {
+//   final fileMatch = RegExp(r'([^/]+\.dart):(\d+)').firstMatch(traceLine);
+//   final methodMatch = RegExp(r'\s([A-Za-z0-9_<>]+)\s*\(').firstMatch(traceLine);
+
+//   final file = fileMatch?.group(1) ?? 'unknown.dart';
+//   final line = fileMatch?.group(2) ?? '?';
+//   final method = methodMatch?.group(1) ?? 'unknown';
+
+//   return '$file:$line ($method)';
+// }

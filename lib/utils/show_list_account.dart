@@ -1,17 +1,24 @@
 import 'package:core/core.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
-void showListAccount({
+void showListAccount<T>({
   required BuildContext context,
-  required List<AccountItem> accounts,
-  required Function() onLogout,
+  // required List<AccountItem> accounts,
+  required List<T> items,
+  // required Function() onLogout,
+  required Function() onAddAccount,
+  required Widget Function(T account) buildItem,
 }) {
   Modal.showBottomSheet(
     context: context,
-    builder: (context, scrollController) => _ListAccount(
-      accounts: accounts,
-      onLogout: onLogout,
+    initialSize: 0.5,
+    draggableScrollable: true,
+    builder: (context, scrollController) => _ListAccount<T>(
+      // accounts: accounts,
+      items: items,
+      onAddAccount: onAddAccount,
+      buildItem: buildItem,
     ),
   );
 }
@@ -27,85 +34,73 @@ class AccountItem {
   });
 }
 
-class _ListAccount extends StatelessWidget {
-  final List<AccountItem> accounts;
-  final Function() onLogout;
-  _ListAccount({required this.accounts, required this.onLogout});
+class _ListAccount<T> extends StatelessWidget {
+  _ListAccount(
+      {required this.onAddAccount,
+      required this.buildItem,
+      required this.items});
+  final Function() onAddAccount;
+  final List<T> items;
+  final Widget Function(T account) buildItem;
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode =
         Theme.of(context).colorScheme.brightness == Brightness.dark;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return Column(
+      spacing: Spacing.small,
       children: [
-        ...accounts.map((account) => Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: Spacing.medium,
-                vertical: Spacing.small,
-              ),
-              child: Row(
-                spacing: Spacing.small,
-                children: [
-                  SAvatar(
-                    url: account.avatar,
-                    size: 40,
+        ...items.map((e) => buildItem(e)),
+        GestureDetector(
+          onTap: () {
+            Navigator.of(context).pop();
+            onAddAccount();
+          },
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: Spacing.medium,
+              vertical: Spacing.small,
+            ),
+            child: Row(
+              spacing: Spacing.mediumSmall,
+              children: [
+                SIconButton(
+                  bgColor: onSurface.withAlpha(30),
+                  // svgPath: 'assets/images/svg/plus.svg',
+                  child: Icon(
+                    CupertinoIcons.plus,
+                    color: onSurface.withAlpha(100),
                   ),
-                  Expanded(
-                    child: Text(
-                      account.name,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                      ),
+                  // onTap: () {},
+                ),
+                Expanded(
+                  child: Text(
+                    "Add account".tr,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (account.isSelected)
-                    SRadio(
-                      checked: true,
-                      color: Colors.white,
-                    )
-                ],
-              ),
-            )),
-        Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: Spacing.medium,
-            vertical: Spacing.small,
-          ),
-          child: Row(
-            spacing: Spacing.small,
-            children: [
-              SIconButton(
-                bgColor: isDarkMode
-                    ? Colors.white.withAlpha(50)
-                    : Colors.black.withAlpha(50),
-                svgPath: 'assets/images/svg/plus.svg',
-                onTap: () {},
-              ),
-              Expanded(
-                child: Text(
-                  "Thêm tài khoản",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(Spacing.medium),
-          child: SButton(
-            width: double.infinity,
-            rounded: true,
-            color: ButtonColor.red,
-            child: Text('Đăng xuất khỏi tất cả tài khoản'),
-            onTap: () {
-              Navigator.of(context).pop();
-              Get.find<AuthController>().logout();
-              onLogout();
-            },
-          ),
-        )
+        // Padding(
+        //   padding: const EdgeInsets.all(Spacing.medium),
+        //   child: SButton(
+        //     width: double.infinity,
+        //     rounded: true,
+        //     color: ButtonColor.red,
+        //     child: Text('Đăng xuất khỏi tất cả tài khoản'),
+        //     onTap: () {
+        //       Navigator.of(context).pop();
+        //       Get.find<AuthController>().logout();
+        //       onLogout();
+        //     },
+        //   ),
+        // )
       ],
     );
   }

@@ -40,7 +40,8 @@ class _SDropdownState extends State<SDropdown> {
   Future<void> _toggleDropdown() async {
     if (_dropdownOverlay == null) {
       _dropdownOverlay = _createOverlay();
-      Overlay.of(context).insert(_dropdownOverlay!, above: null);
+      Overlay.of(context, rootOverlay: true)
+          .insert(_dropdownOverlay!, above: null);
       setState(() {});
     } else {
       await _removeOverlay();
@@ -100,8 +101,8 @@ class _SDropdownState extends State<SDropdown> {
             child: Padding(
               padding: EdgeInsets.only(),
               child: Container(
-                width: widget.width ??
-                    max(buttonSize.width, widget.minWidth ?? 0),
+                width:
+                    widget.width ?? max(buttonSize.width, widget.minWidth ?? 0),
                 height: widget.height,
                 constraints: BoxConstraints(
                   maxHeight: maxHeight,

@@ -4,10 +4,12 @@ import 'package:core/core.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as m;
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
+// import 'package:get/get.dart';
 
 part "snackbar.dart";
+part "select.dart";
 
 class WarningOption {
   Widget child;
@@ -39,17 +41,173 @@ class ButtonAction {
 }
 
 class _Modal {
+  pop(BuildContext context, {dynamic result}) {
+    Navigator.pop(context, result);
+  }
+
+  Future<T?> dialog<T>({
+    required BuildContext context,
+    required Widget Function(BuildContext) builder,
+    barrierDismissible = true,
+  }) async {
+    return await showCupertinoDialog<T>(
+      context: context,
+      barrierDismissible: barrierDismissible,
+      useRootNavigator: true,
+      requestFocus: true,
+      builder: (context) => GestureDetector(
+        onTap: () {
+          if (barrierDismissible) {
+            Navigator.pop(context);
+          }
+        },
+        child: Material(
+          color: Colors.transparent,
+          child: GestureDetector(
+              onTap: () {
+                FocusScope.of(context).unfocus();
+              },
+              child: Center(child: builder(context))),
+        ),
+      ),
+    );
+  }
+
+  Future<void> inputDialog(
+      {required BuildContext context,
+      required Function(String) onConfirm,
+      Widget? label,
+      String? hintText,
+      String? description,
+      Widget? suffix,
+      String? defaultValue,
+      TextInputType? keyboardType,
+      int? minLines,
+      int? maxLines,
+      bool multiline = false,
+      bool required = false,
+      int? maxLength,
+      String? confirmText,
+      List<TextInputFormatter> inputFormatters = const []}) async {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final controller = InputController(value: defaultValue);
+    return dialog(
+        context: context,
+        builder: (context) => StatefulBuilder(builder: (context, setState) {
+              bool disabled =
+                  required ? (controller.text.trim().isEmpty) : false;
+
+              return DialogWraper(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: Spacing.small,
+                  children: [
+                    if (label != null)
+                      DefaultTextStyle(
+                          style: TextStyle(
+                              color: onSurface,
+                              fontSize: 20,
+                              letterSpacing: -1,
+                              fontWeight: FontWeight.bold),
+                          child: label),
+                    if (description != null)
+                      DefaultTextStyle(
+                          style: TextStyle(
+                              color: onSurface.withAlpha(150),
+                              fontWeight: FontWeight.w500),
+                          child: Text(description)),
+                    SizedBox(height: Spacing.medium),
+                    SInput(
+                      autofocus: true,
+                      controller: controller,
+                      keyboardType: keyboardType,
+                      minLine: minLines,
+                      maxLine: maxLines,
+                      maxLength: maxLength,
+                      multiline: multiline,
+                      hintText: hintText,
+                      suffix: suffix,
+                      // minLines: minLines,
+                      // maxLines: maxLines,
+                      inputFormatters: inputFormatters,
+                      showError: false,
+                      onChanged: (value) {
+                        setState(() {
+                          disabled = value.trim().isEmpty;
+                        });
+                      },
+                      clearable: true,
+                      // decoration: InputDecoration(
+                      //   hintText: hintText,
+                      //   hintStyle: TextStyle(color: onSurface.withAlpha(100)),
+                      //   enabledBorder: UnderlineInputBorder(
+                      //     borderSide: BorderSide(
+                      //       color: onSurface.withAlpha(50),
+                      //     ),
+                      //   ),
+                      //   suffix: suffix,
+                      // ),
+                    ),
+                    if (maxLength != null)
+                      SizedBox(
+                          width: double.infinity,
+                          child: Text(
+                            "${controller.value.length}/${maxLength}",
+                            textAlign: TextAlign.right,
+                            style: TextStyle(color: onSurface.withAlpha(150)),
+                          )),
+                    SizedBox(height: Spacing.medium),
+                    Row(
+                      spacing: Spacing.small,
+                      children: [
+                        Expanded(
+                          child: SButton(
+                            color: ButtonColor.grey,
+                            rounded: true,
+                            child: Text(tr("Cancel")),
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ),
+                        Expanded(
+                          child: SButton(
+                            color: ButtonColor.red,
+                            rounded: true,
+                            disabled: disabled,
+                            child: Text(confirmText ?? tr("Confirm")),
+                            onTap: () {
+                              Navigator.pop(context);
+                              onConfirm(controller.text);
+                            },
+                          ),
+                        )
+                      ],
+                    )
+                  ],
+                ),
+              );
+            }));
+  }
+
   Future<T?> showBottomSheet<T>({
     required BuildContext context,
     Widget Function(BuildContext, ScrollController?)? builder,
     Widget? leading,
-    double? size,
+    // double? size,
+    double? initialSize,
     double? maxSize,
     double? minSize,
     String? title,
     bool draggableScrollable = false,
+    bool feedback = true,
+    bool dismissible = true,
+    final Color? bgColor,
   }) async {
-    HapticFeedback.mediumImpact();
+    if (feedback) {
+      HapticFeedback.mediumImpact();
+    }
     // assert(builder != null || (children != null && children!.isNotEmpty));
     return await showModalBottomSheet<T>(
       context: context,
@@ -58,6 +216,8 @@ class _Modal {
       barrierColor: Colors.black.withAlpha(100),
       backgroundColor: Colors.transparent, // Đặt nền trong suốt
       useSafeArea: true,
+      isDismissible: dismissible,
+      enableDrag: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(16),
@@ -83,74 +243,81 @@ class _Modal {
                   bottom: MediaQuery.of(context).viewInsets.bottom),
               child: draggableScrollable
                   ? DraggableScrollableSheet(
+                      expand: false,
                       // controller: controller,
-                      initialChildSize: size ?? 0.5,
-                      minChildSize:
-                          minSize ?? size ?? 0.3, // Kích thước nhỏ nhất (30%)
-                      maxChildSize:
-                          maxSize ?? size ?? 0.9, // Kích thước lớn nhất (90%)
+                      initialChildSize: initialSize ?? 0.5,
+                      minChildSize: minSize ?? 0.3, // Kích thước nhỏ nhất (30%)
+                      maxChildSize: maxSize ?? 1, // Kích thước lớn nhất (90%)
                       snap: true,
                       builder: (context, scrollController) {
                         return _BottomSheetWraper(
+                            bgColor: bgColor,
                             child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          // crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _Top(),
-                            if (title != null) _Title(title),
-                            if (leading != null) ...[
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: Spacing.medium, vertical: 8),
-                                child: leading,
-                              ),
-                              // SizedBox(height: 4),
-                              Divider(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .surface
-                                    .withAlpha(50),
-                              ),
-                              SizedBox(height: 8),
-                            ],
-                            Expanded(
-                              child: builder!(context, scrollController),
-                            )
-                          ],
-                        ));
+                              mainAxisSize: MainAxisSize.max,
+                              // crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _Top(),
+                                if (title != null) _Title(title),
+                                if (leading != null) ...[
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: Spacing.medium,
+                                        vertical: 8),
+                                    child: leading,
+                                  ),
+                                  // SizedBox(height: 4),
+                                  Divider(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .surface
+                                        .withAlpha(50),
+                                  ),
+                                  SizedBox(height: 8),
+                                ],
+                                Expanded(
+                                  child: SizedBox(
+                                      width: double.infinity,
+                                      child:
+                                          builder!(context, scrollController)),
+                                )
+                              ],
+                            ));
                       },
                     )
                   : _BottomSheetWraper(
+                      bgColor: bgColor,
                       child: SafeArea(
-                      child: IntrinsicHeight(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          // crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _Top(),
-                            if (title != null) _Title(title),
-                            if (leading != null) ...[
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: Spacing.medium, vertical: 8),
-                                child: leading,
-                              ),
-                              // SizedBox(height: 4),
-                              Divider(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .surface
-                                    .withAlpha(50),
-                              ),
-                              SizedBox(height: 8),
+                        child: IntrinsicHeight(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            // crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _Top(),
+                              if (title != null) _Title(title),
+                              if (leading != null) ...[
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: Spacing.medium, vertical: 8),
+                                  child: leading,
+                                ),
+                                // SizedBox(height: 4),
+                                Divider(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surface
+                                      .withAlpha(50),
+                                ),
+                                SizedBox(height: 8),
+                              ],
+                              Expanded(
+                                child: SizedBox(
+                                    width: double.infinity,
+                                    child: builder!(context, null)),
+                              )
                             ],
-                            Expanded(
-                              child: builder!(context, null),
-                            )
-                          ],
+                          ),
                         ),
-                      ),
-                    )),
+                      )),
             ),
           ),
         );
@@ -410,22 +577,73 @@ class _Modal {
     );
   }
 
-  void showAlertDialog({
-    required BuildContext context,
-    required String title,
-    required String message,
-    required List<CupertinoDialogAction> actions,
+  Future<T?> showAlertDialog<T>({
+    BuildContext? context,
+    String? title,
+    String? message,
+    List<CupertinoDialogAction> actions = const [],
+    List<CupertinoDialogAction> Function(BuildContext context)? builderActions,
     bool barrierDismissible = true,
+    Widget Function(BuildContext)? builder,
   }) {
-    showCupertinoDialog<void>(
-      context: context,
+    return showCupertinoDialog<T>(
+      context: context ?? Get.context!,
       barrierDismissible: barrierDismissible,
-      builder: (BuildContext context) => CupertinoAlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: actions,
-      ),
+      builder: (BuildContext context) =>
+          builder?.call(context) ??
+          CupertinoAlertDialog(
+            title: title == null
+                ? null
+                : Text(title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                    )),
+            content: Padding(
+              padding: const EdgeInsets.only(top: Spacing.small),
+              child: message == null
+                  ? null
+                  : Text(message, style: TextStyle(height: 1.5)),
+            ),
+            actions: builderActions?.call(context) ?? actions,
+          ),
     );
+  }
+
+  Future<bool> showConfirm(
+      {required String title,
+      required String message,
+      String? cancelText,
+      String? confirmText,
+      BuildContext? context}) async {
+    final check = await showCupertinoDialog<bool>(
+      context: context ?? Get.context!,
+      barrierDismissible: true,
+      useRootNavigator: true,
+      builder: (BuildContext context) => CupertinoAlertDialog(
+          title: Text(title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              )),
+          content: Padding(
+            padding: const EdgeInsets.only(top: Spacing.small),
+            child: Text(message, style: TextStyle(height: 1.5)),
+          ),
+          actions: [
+            CupertinoDialogAction(
+                onPressed: () {
+                  context.closeModal(result: false);
+                },
+                child: Text(cancelText ?? tr("Cancel"))),
+            CupertinoDialogAction(
+                isDestructiveAction: true,
+                onPressed: () {
+                  context.closeModal(result: true);
+                },
+                child: Text(confirmText ?? tr("Confirm"))),
+          ]),
+    );
+
+    return check == true;
   }
 
   void showMenu({
@@ -540,96 +758,113 @@ class _Modal {
     final onSurface = Theme.of(context).colorScheme.onSurface;
     final descriptionColor = isDarkMode ? onSurface.withAlpha(150) : onSurface;
 
-    showDialog(
-      useRootNavigator: true,
-      context: context,
-      barrierColor: Colors.black.withAlpha(100),
-      builder: (context) {
-        return Material(
-          color: Colors.transparent,
-          child: Center(
-            child: Container(
-              clipBehavior: Clip.hardEdge,
-              width: width,
-              decoration: BoxDecoration(
-                color: isDarkMode ? Colors.black : Colors.white,
-                borderRadius: BorderRadius.circular(Spacing.medium),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: Spacing.medium,
-                      vertical: Spacing.medium,
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          title,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          message,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(children: [
-                    if (actions != null)
-                      ...actions!.map((btn) {
-                        return _ButtonAction(
-                          text: Text(btn.title,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: _ACTION_COLORS[btn.color],
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              )),
-                          onTap: btn.onTap,
-                        );
-                      }),
-                    if (!hideDefaultAction)
-                      _ButtonAction(
-                        text: Text(tr(confirmText),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            )),
-                        onTap: () {
-                          Navigator.pop(context);
-                          onConfirm?.call();
-                        },
-                      ),
-                    if (!hideDefaultAction)
-                      _ButtonAction(
-                        text: Text(tr(cancelText),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.blue,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            )),
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                      )
-                  ]),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
+    showAlertDialog(context: context, title: title, message: message, actions: [
+      CupertinoDialogAction(
+        child: Text(cancelText),
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      ),
+      CupertinoDialogAction(
+        child: Text(confirmText),
+        isDestructiveAction: true,
+        onPressed: () {
+          Navigator.pop(context);
+          onConfirm?.call();
+        },
+      ),
+    ]);
+
+    // showDialog(
+    //   useRootNavigator: true,
+    //   context: context,
+    //   barrierColor: Colors.black.withAlpha(100),
+    //   builder: (context) {
+    //     return Material(
+    //       color: Colors.transparent,
+    //       child: Center(
+    //         child: Container(
+    //           clipBehavior: Clip.hardEdge,
+    //           width: width,
+    //           decoration: BoxDecoration(
+    //             color: isDarkMode ? Colors.black : Colors.white,
+    //             borderRadius: BorderRadius.circular(Spacing.medium),
+    //           ),
+    //           child: Column(
+    //             mainAxisSize: MainAxisSize.min,
+    //             children: [
+    //               Padding(
+    //                 padding: EdgeInsets.symmetric(
+    //                   horizontal: Spacing.medium,
+    //                   vertical: Spacing.medium,
+    //                 ),
+    //                 child: Column(
+    //                   children: [
+    //                     Text(
+    //                       title,
+    //                       textAlign: TextAlign.center,
+    //                       style: TextStyle(
+    //                         fontSize: 18,
+    //                         fontWeight: FontWeight.bold,
+    //                       ),
+    //                     ),
+    //                     Text(
+    //                       message,
+    //                       textAlign: TextAlign.center,
+    //                       style: TextStyle(fontSize: 14),
+    //                     ),
+    //                   ],
+    //                 ),
+    //               ),
+    //               Column(children: [
+    //                 if (actions != null)
+    //                   ...actions!.map((btn) {
+    //                     return _ButtonAction(
+    //                       text: Text(btn.title,
+    //                           textAlign: TextAlign.center,
+    //                           style: TextStyle(
+    //                             color: _ACTION_COLORS[btn.color],
+    //                             fontSize: 18,
+    //                             fontWeight: FontWeight.w600,
+    //                           )),
+    //                       onTap: btn.onTap,
+    //                     );
+    //                   }),
+    //                 if (!hideDefaultAction)
+    //                   _ButtonAction(
+    //                     text: Text(tr(confirmText),
+    //                         textAlign: TextAlign.center,
+    //                         style: TextStyle(
+    //                           color: Colors.red,
+    //                           fontSize: 18,
+    //                           fontWeight: FontWeight.w600,
+    //                         )),
+    //                     onTap: () {
+    //                       Navigator.pop(context);
+    //                       onConfirm?.call();
+    //                     },
+    //                   ),
+    //                 if (!hideDefaultAction)
+    //                   _ButtonAction(
+    //                     text: Text(tr(cancelText),
+    //                         textAlign: TextAlign.center,
+    //                         style: TextStyle(
+    //                           color: Colors.blue,
+    //                           fontSize: 18,
+    //                           fontWeight: FontWeight.w600,
+    //                         )),
+    //                     onTap: () {
+    //                       Navigator.pop(context);
+    //                     },
+    //                   )
+    //               ]),
+    //             ],
+    //           ),
+    //         ),
+    //       ),
+    //     );
+    //   },
+    // );
   }
 
   void warning({
@@ -687,6 +922,135 @@ class _Modal {
   void hide(BuildContext context) {
     Navigator.pop(context);
   }
+
+  Widget showPopover({
+    required BuildContext context,
+    required Widget child,
+    required Widget trigger,
+    Alignment alignment = Alignment.bottomRight,
+    Offset offset = Offset.zero,
+  }) {
+    Offset? tapPosition;
+
+    final overlay = Overlay.of(context);
+    final globalKey = GlobalKey();
+
+    return GestureDetector(
+      key: globalKey,
+      // onTapDown: (details) {
+      //   tapPosition = details.globalPosition;
+      // },
+      onTap: () {
+        final box = globalKey.currentContext?.findRenderObject() as RenderBox;
+        final _offset = box.localToGlobal(Offset.zero);
+        var x = _offset.dx + offset.dx;
+        var y = _offset.dy + offset.dy;
+        // final overlay =
+        //     Overlay.of(context).context.findRenderObject() as RenderBox;
+
+        late OverlayEntry entry;
+
+        entry = OverlayEntry(
+          // builder: (_) => Positioned(
+          //   left: x,
+          //   top: y,
+          //   child: Material(child: Container(color: Colors.red, child: child)),
+          // ),
+          builder: (_) => Stack(
+            children: [
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTapDown: (details) {
+                    entry.remove();
+                  },
+                ),
+              ),
+              Positioned(
+                left: x,
+                top: y,
+                child: Material(color: Colors.transparent, child: child),
+              )
+            ],
+          ),
+        );
+
+        overlay.insert(entry);
+      },
+      child: trigger,
+    );
+  }
+}
+
+class DialogWraper extends StatelessWidget {
+  const DialogWraper({
+    super.key,
+    required this.child,
+    this.maxWidth = double.infinity,
+    this.barrierDismissible = true,
+    this.padding = const EdgeInsets.all(Spacing.medium),
+    this.radius = Spacing.large,
+  });
+
+  final Widget child;
+  final double maxWidth;
+  final bool barrierDismissible;
+  final EdgeInsetsGeometry padding;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = Theme.of(context).scaffoldBackgroundColor;
+    return GestureDetector(
+      onTap: () {
+        if (barrierDismissible) {
+          Navigator.pop(context);
+        }
+      },
+      child: Material(
+        color: Colors.transparent,
+        child: GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(radius),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: Container(
+                    width: double.infinity,
+                    alignment: Alignment.center,
+                    child: Container(
+                      padding: padding,
+                      margin: EdgeInsets.symmetric(horizontal: Spacing.medium),
+                      clipBehavior: Clip.hardEdge,
+                      constraints: BoxConstraints(
+                        maxWidth: maxWidth,
+                      ),
+                      decoration: BoxDecoration(
+                        color: bg,
+                        borderRadius: BorderRadius.circular(radius),
+                      ),
+                      child: Container(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height * 0.8,
+                          ),
+                          child: SingleChildScrollView(
+                              child: IntrinsicHeight(child: child))),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _ButtonAction extends StatelessWidget {
@@ -734,20 +1098,24 @@ class _BottomSheetWraper extends StatelessWidget {
   const _BottomSheetWraper({
     super.key,
     required this.child,
+    this.bgColor,
   });
 
   final Widget child;
+  final Color? bgColor;
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode =
         Theme.of(context).colorScheme.brightness == Brightness.dark;
 
-    final bgColor = isDarkMode
-        ? Color(0xFF142127)
-        : Theme.of(context).scaffoldBackgroundColor;
+    final _bgColor = bgColor ??
+        (isDarkMode
+            ? Color(0xFF142127)
+            : Theme.of(context).scaffoldBackgroundColor);
     return GestureDetector(
       onTap: () {
+        FocusScope.of(context).unfocus();
         // Prevent close modal when tap on background
         // Navigator.pop(context);
       },
@@ -758,7 +1126,7 @@ class _BottomSheetWraper extends StatelessWidget {
             topLeft: Radius.circular(Spacing.medium),
             topRight: Radius.circular(Spacing.medium),
           ),
-          color: bgColor,
+          color: _bgColor,
           // color: Colors.red,
 
           boxShadow: [
@@ -901,26 +1269,124 @@ class ButtonMenu extends StatelessWidget {
   }
 }
 
+class ActionSheetWraper extends StatelessWidget {
+  const ActionSheetWraper({
+    super.key,
+    required this.children,
+    this.title,
+    this.scrollController,
+    this.padding,
+    this.childPadding,
+    this.titlePadding,
+    this.crossAxisAlignment = CrossAxisAlignment.start,
+  });
+  final List<Widget> children;
+  final Widget? title;
+  final ScrollController? scrollController;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? childPadding;
+  final EdgeInsetsGeometry? titlePadding;
+  final CrossAxisAlignment crossAxisAlignment;
+
+  @override
+  Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return SingleChildScrollView(
+      controller: scrollController,
+      padding: padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null)
+            Container(
+              padding: titlePadding ??
+                  EdgeInsets.symmetric(
+                    horizontal: Spacing.medium,
+                    vertical: Spacing.medium,
+                  ),
+              margin: EdgeInsets.only(bottom: Spacing.medium / 2),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: onSurface.withAlpha(30),
+                  ),
+                ),
+              ),
+              child: title!,
+            ),
+          Container(
+            padding: childPadding,
+            child: Column(
+              crossAxisAlignment: crossAxisAlignment,
+              spacing: Spacing.small,
+              children: children,
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class BottomSheetTitle extends StatelessWidget {
+  final Widget? leading;
+  final Widget? title;
+  final Widget? trailing;
+
+  BottomSheetTitle({
+    this.leading,
+    this.title,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final onSurface = getOnSurface(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        if (leading != null) leading!,
+        if (title != null)
+          Expanded(
+            child: DefaultTextStyle(
+                style: TextStyle(
+                    fontSize: 24,
+                    letterSpacing: -0.5,
+                    fontWeight: FontWeight.bold,
+                    color: onSurface),
+                child: title!),
+          ),
+        if (trailing != null) trailing!,
+      ],
+    );
+  }
+}
+
+// ignore: must_be_immutable
 class ActionSheet extends StatelessWidget {
-  const ActionSheet({
+  ActionSheet({
     super.key,
     this.icon,
     this.title,
-    this.subtitle,
+    this.subTitle,
     this.onTap,
     this.color,
     this.checked,
     this.trailing,
     this.isDestructive = false,
+    this.radioButton = false,
+    this.selected = false,
   });
   final Widget? icon;
   final Widget? title;
-  final Widget? subtitle;
-  final Function()? onTap;
+  final Widget? subTitle;
+  Function()? onTap;
   final Color? color;
   final bool? checked;
   final Widget? trailing;
   final bool isDestructive;
+  bool radioButton;
+  bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -930,7 +1396,7 @@ class ActionSheet extends StatelessWidget {
       onPressed: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(
-          vertical: Spacing.small,
+          // vertical: Spacing.small,
           horizontal: Spacing.medium,
         ),
         width: double.infinity,
@@ -963,16 +1429,15 @@ class ActionSheet extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: isDestructive ? Colors.red : color ?? onSurface),
+                            color: isDestructive
+                                ? Colors.red
+                                : color ?? onSurface),
                         child: title!),
-                  if (subtitle != null)
+                  if (subTitle != null)
                     DefaultTextStyle(
                         style: TextStyle(
-                            fontSize: 12,
-                            color: isDestructive
-                                ? Colors.red.withAlpha(150)
-                                : onSurface.withAlpha(150)),
-                        child: subtitle!),
+                            fontSize: 12, color: onSurface.withAlpha(150)),
+                        child: subTitle!),
                 ],
               ),
             ),
@@ -988,6 +1453,15 @@ class ActionSheet extends StatelessWidget {
                     onChanged: (value) {},
                   ),
                 ),
+              ),
+            if (radioButton)
+              SRadio(
+                size: 25,
+                // color: onSurface.withAlpha(100),
+                borderColor: onSurface.withAlpha(30),
+                unCheckedColor: onSurface.withAlpha(30),
+                checked: selected,
+                // onChanged: (value) {},
               )
           ],
         ),
@@ -1021,17 +1495,19 @@ class ActionTitle extends StatelessWidget {
 class ActionDivider extends StatelessWidget {
   const ActionDivider({
     super.key,
+    this.padding,
+    this.color,
   });
+  final double? padding;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     final onSurface = Theme.of(context).colorScheme.onSurface;
     return Container(
-      margin: EdgeInsets.symmetric(
-        vertical: Spacing.medium,
-      ),
+      margin: EdgeInsets.symmetric(vertical: padding ?? Spacing.small),
       child: Divider(
-        color: onSurface.withAlpha(30),
+        color: color ?? onSurface.withAlpha(30),
         height: 1,
       ),
     );
@@ -1040,3 +1516,10 @@ class ActionDivider extends StatelessWidget {
 
 //--------------------------------
 var Modal = _Modal();
+
+extension ModalX on BuildContext {
+  closeModal({dynamic result}) {
+    Modal.pop(this, result: result);
+    // Get.back(result: true);
+  }
+}

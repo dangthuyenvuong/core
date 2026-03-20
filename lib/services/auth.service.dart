@@ -1,11 +1,9 @@
 import 'dart:io';
 
-import 'package:core/http.dart';
-import 'package:core/models/auth.model.dart';
-import 'package:core/models/user.model.dart';
+import 'package:core/core.dart';
+import 'package:core/models/auth/model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 // class LoginResponse {
 //   final UserModel user;
@@ -14,17 +12,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 // }
 
 class AuthService {
-  static Future<UserCredential?> signInWithGoogle() async {
-    try {
-      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-      final UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithPopup(googleProvider);
-      return userCredential;
-    } catch (e) {
-      print("Lỗi đăng nhập Google: $e");
-    }
-    return null;
-  }
+  static bool get isLoggedIn => StorageService.get('userId') != null;
 
   static Future<UserCredential?> signInWithFacebook() async {
     try {
@@ -40,26 +28,37 @@ class AuthService {
     return null;
   }
 
-  static Future<AuthorizationCredentialAppleID> signInWithApple() async {
-    final credential = await SignInWithApple.getAppleIDCredential(
-      scopes: [
-        AppleIDAuthorizationScopes.email,
-        AppleIDAuthorizationScopes.fullName,
-      ],
-    );
-    return credential;
+  static Future<dynamic?> signInWithGoogle() async {
+    final user = await GoogleService.signInWithGoogle();
+    if (user != null) {
+      final idToken = await user.getIdToken();
+      final response = await Http.post(
+        '/gym_social/auth/login-with-google',
+        body: {'id_token': idToken},
+      );
+      return response['data'];
+     
+    }
+    return null;
   }
 
-  // static Future<LoginResponse> fakeLogin(String url) async {
-  //   final response = await Http.post(
-  //     url,
-  //   );
+  static Future<void> signOut() async {
+    // await GoogleSignIn().signOut();
+    // await _auth.signOut();
+  }
 
-  //   return LoginResponse(
-  //     user: UserModel.fromJson(response['data']['user']),
-  //     token: TokenModel.fromJson(response['data']['token']),
-  //   );
-  // }
+  static Future<dynamic?> signInWithApple() async {
+    final user = await GoogleService.signInWithApple();
+    if (user != null) {
+      final idToken = await user.getIdToken();
+      final response = await Http.post(
+        '/auth/v1/login-with-google',
+        body: {'id_token': idToken},
+      );
+      return response['data'];
+    }
+    return null;
+  }
 }
 
 bool isSimulator() {

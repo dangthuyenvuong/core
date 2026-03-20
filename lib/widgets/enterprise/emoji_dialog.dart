@@ -24,11 +24,11 @@ class EmojiDialog extends StatelessWidget {
             _Emoji(emoji: "😢"),
             _Emoji(emoji: "😡"),
             _Emoji(emoji: "👍"),
-            SIconButton(
-              bgColor: onSurface.withAlpha(20),
-              child: Icon(Icons.add, size: 20),
-              onTap: () {},
-            )
+            // SIconButton(
+            //   bgColor: onSurface.withAlpha(20),
+            //   child: Icon(Icons.add, size: 20),
+            //   onTap: () {},
+            // )
             // Container(
             //   width: 35,
             //   height: 35,

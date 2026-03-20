@@ -4,17 +4,19 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'model.freezed.dart';
 part 'model.g.dart';
 
-enum Gender { male, female }
+enum Gender { male, female, other }
+
 
 @freezed
 class UserModel with _$UserModel {
   const factory UserModel({
-    String? id,
+    required String id,
     String? full_name,
     String? avatar,
     String? account_id,
     String? email,
     String? phone,
+    
     @EnumConverter() Gender? gender,
     @DateTimeConverter() DateTime? birthday,
   }) = _UserModel;

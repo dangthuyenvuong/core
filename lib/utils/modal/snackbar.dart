@@ -1,6 +1,14 @@
 part of "modal.dart";
 
+SnackbarController? snackbarController;
+
 extension Snackbar on _Modal {
+  void closeSnackbar() {
+    Get.closeCurrentSnackbar();
+    Get.closeAllSnackbars();
+    snackbarController?.close();
+  }
+
   void showSnackBar({
     required BuildContext context,
     required Widget message,
@@ -14,33 +22,47 @@ extension Snackbar on _Modal {
     double? fontSize,
     FontWeight? fontWeight,
     TextAlign? textAlign,
-    VoidCallback? onTap,
-    Widget? icon,
+    OnTap? onTap,
+    // Widget? icon,
     SnackPosition snackPosition = SnackPosition.BOTTOM,
+    Widget? title,
+    Duration? duration,
   }) {
     Get.closeCurrentSnackbar();
     Get.closeAllSnackbars();
-    Get.showSnackbar(
+    snackbarController = Get.showSnackbar(
       GetSnackBar(
+        onTap: onTap,
+        backgroundColor: backgroundColor ??
+            Get.theme.bottomNavigationBarTheme.backgroundColor?.lighter(0.1) ??
+            Color(0xFF303030),
+        padding: padding ?? EdgeInsets.all(16),
         // mainButton: IconButton(
         //   onPressed: onTap,
         //   icon: Icon(Icons.close),
         // ),
         // message: "ádfasdf",
         messageText: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 10,
           children: [
-            leading ?? SizedBox(),
-            message,
+            if (leading != null) leading,
+            Expanded(child: message),
+            ...actions,
           ],
         ),
         snackPosition: snackPosition,
         // backgroundColor: Colors.black,
         borderRadius: 10,
         margin: EdgeInsets.all(10),
-        duration: Duration(seconds: 2),
+        duration: duration ?? Duration(seconds: 2),
         animationDuration: kThemeAnimationDuration,
-        icon: icon,
+        // icon: icon,
+        shouldIconPulse: false,
+        titleText: title,
       ),
+
       // snackPosition: SnackPosition.BOTTOM,
       // // titleText: Text("Thông báo"),
       // messageText: message,
@@ -155,5 +177,50 @@ extension Snackbar on _Modal {
     //     duration: Duration(seconds: 2),
     //   ),
     // );
+  }
+
+  showError(String message) {
+    Modal.showSnackBar(
+      context: Get.context!,
+      leading: Icon(CupertinoIcons.xmark_circle_fill, color: Colors.white),
+      backgroundColor: Colors.red,
+      message: Text(message, style: TextStyle(color: Colors.white)),
+    );
+  }
+
+  void showNotification({
+    required BuildContext context,
+    String? title,
+    String? message,
+    Widget? icon,
+    List<Widget> actions = const [],
+  }) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    Modal.showSnackBar(
+      duration: Duration(seconds: 5),
+      context: context,
+      // backgroundColor: Theme.of(
+      //   context,
+      // ).bottomNavigationBarTheme.backgroundColor?.lighter(0.1),
+      message: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null)
+            Text(
+              title,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          if (message != null) Text(message),
+        ],
+      ),
+      leading: icon,
+      // title: Text(
+      //   "Inbox",
+      //   style: TextStyle(fontWeight: FontWeight.bold),
+      // ),
+      actions: actions,
+      // backgroundColor: Colors.white,
+      snackPosition: SnackPosition.TOP,
+    );
   }
 }

@@ -3,8 +3,18 @@ import 'package:flutter/material.dart';
 class CustomInputController extends TextEditingController {
   String? suffixText;
   final FocusNode? focusNode;
-
-  CustomInputController({super.text, this.suffixText, this.focusNode});
+  TextStyle? suffixStyle;
+  final Function(String value)? onChanged;
+  CustomInputController(
+      {super.text,
+      this.suffixText,
+      this.focusNode,
+      this.suffixStyle,
+      this.onChanged}) {
+    if (onChanged != null) {
+      this.addListener(() => onChanged!(text));
+    }
+  }
 
   bool get _hasFocus {
     return focusNode?.hasFocus ?? false;
@@ -20,10 +30,12 @@ class CustomInputController extends TextEditingController {
       style: style,
       children: [
         TextSpan(text: value.text, style: style),
-        if (suffixText != null) ...[
-          if (_hasFocus || value.text.isNotEmpty)
-          TextSpan(text: '$suffixText', style: style),
-        ],
+        if (suffixText != null)
+          TextSpan(text: '$suffixText', style: suffixStyle ?? style),
+        // if (suffixText != null) ...[
+        //   if (_hasFocus || value.text.isNotEmpty)
+        //   TextSpan(text: '$suffixText', style: suffixStyle ?? style),
+        // ],
       ],
     );
   }

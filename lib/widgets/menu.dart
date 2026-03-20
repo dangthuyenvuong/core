@@ -61,14 +61,7 @@ class Menu {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.max,
-                      children: List.generate(
-                          menus.length,
-                          (index) => item(
-                                context: context,
-                                menu: menus[index],
-                                border:
-                                    index == menus.length - 1 ? false : true,
-                              )),
+                      children: List.generate(menus.length, (index) => menus[index]),
                     ),
                   ),
                 ),
@@ -80,61 +73,61 @@ class Menu {
     );
   }
 
-  static Widget item({
-    required BuildContext context,
-    required MenuItem menu,
-    bool border = true,
-  }) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDarkMode ? Colors.white : Colors.black;
+  // static Widget item({
+  //   required BuildContext context,
+  //   required MenuItem menu,
+  //   bool border = true,
+  // }) {
+  //   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+  //   final textColor = isDarkMode ? Colors.white : Colors.black;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          Navigator.pop(context);
-          menu.onTap?.call();
-        },
-        splashColor: Colors.black.withAlpha(50),
-        child: Container(
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-              border: border
-                  ? Border(bottom: BorderSide(color: textColor.withAlpha(20)))
-                  : null),
-          child: Row(
-            children: [
-              if (menu.svgIcon != null)
-                SvgPicture.asset(
-                  menu.svgIcon!,
-                  width: 20,
-                  height: 20,
-                  colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
-                ),
-              SizedBox(width: 8),
-              DefaultTextStyle(
-                style: TextStyle(color: menu.textColor ?? textColor),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (menu.title != null)
-                      Text(menu.title!, style: TextStyle(color: textColor)),
-                    if (menu.subtitle != null)
-                      Text(
-                        menu.subtitle!,
-                        style: TextStyle(
-                          color: textColor.withAlpha(100),
-                        ),
-                      )
-                  ],
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  //   return Material(
+  //     color: Colors.transparent,
+  //     child: InkWell(
+  //       onTap: () {
+  //         Navigator.pop(context);
+  //         menu.onTap?.call();
+  //       },
+  //       splashColor: Colors.black.withAlpha(50),
+  //       child: Container(
+  //         padding: EdgeInsets.all(8),
+  //         decoration: BoxDecoration(
+  //             border: border
+  //                 ? Border(bottom: BorderSide(color: textColor.withAlpha(20)))
+  //                 : null),
+  //         child: Row(
+  //           children: [
+  //             if (menu.svgIcon != null)
+  //               SvgPicture.asset(
+  //                 menu.svgIcon!,
+  //                 width: 20,
+  //                 height: 20,
+  //                 colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
+  //               ),
+  //             SizedBox(width: 8),
+  //             DefaultTextStyle(
+  //               style: TextStyle(color: menu.textColor ?? textColor),
+  //               child: Column(
+  //                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                 children: [
+  //                   if (menu.title != null)
+  //                     Text(menu.title!, style: TextStyle(color: textColor)),
+  //                   if (menu.subtitle != null)
+  //                     Text(
+  //                       menu.subtitle!,
+  //                       style: TextStyle(
+  //                         color: textColor.withAlpha(100),
+  //                       ),
+  //                     )
+  //                 ],
+  //               ),
+  //             )
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 }
 
 class _MenuContext extends InheritedWidget {
@@ -274,7 +267,7 @@ class SMenuItem extends StatelessWidget {
                   if (checked != null)
                     SRadio(
                       checked: checked ?? false,
-                      onChanged: (value) {},
+                      // onChanged: (value) {},
                     )
                 ],
               ),

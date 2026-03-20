@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:core/core.dart';
 import 'package:core/models/notification/model.dart';
 
-class NotificationService {
+class _NotificationService {
   static Future<NotificationSetting> getNotifications() async {
     try {
       final response = await Http.get('/notification/setting');

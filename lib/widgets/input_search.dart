@@ -1,21 +1,25 @@
 import 'package:core/core.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class InputSearch extends StatefulWidget {
   const InputSearch({
     super.key,
+    this.focusNode,
     this.hintText,
     this.autofocus = false,
     this.showIcon = true,
     this.onChanged,
     this.controller,
+    this.style,
   });
   final String? hintText;
   final bool autofocus;
   final bool showIcon;
   final Function(String)? onChanged;
   final TextEditingController? controller;
+  final FocusNode? focusNode;
+  final TextStyle? style;
 
   @override
   State<InputSearch> createState() => _InputSearchState();
@@ -44,6 +48,8 @@ class _InputSearchState extends State<InputSearch> {
     final hintTextColor = isDarkMode ? Colors.white : Colors.black;
     final textColor = isDarkMode ? Colors.white : Colors.black;
     final bgColor = isDarkMode ? Colors.white : Colors.black;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final bg = Theme.of(context).scaffoldBackgroundColor;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -60,18 +66,24 @@ class _InputSearchState extends State<InputSearch> {
             child: Row(
               children: [
                 if (widget.showIcon)
-                  SvgPicture.asset(
-                    'assets/images/svg/search.svg',
-                    width: 20,
-                    height: 20,
-                    colorFilter: ColorFilter.mode(
-                      Theme.of(context).colorScheme.surface.withAlpha(200),
-                      BlendMode.srcIn,
-                    ),
+                  Icon(
+                    CupertinoIcons.search,
+                    size: 16,
                   ),
+                // SvgPicture.asset(
+                //   'assets/images/svg/search.svg',
+                //   width: 20,
+                //   height: 20,
+                //   package: 'core',
+                //   colorFilter: ColorFilter.mode(
+                //     Theme.of(context).colorScheme.surface.withAlpha(200),
+                //     BlendMode.srcIn,
+                //   ),
+                // ),
                 Expanded(
                   child: TextField(
                     controller: _textEditingController,
+                    focusNode: widget.focusNode,
                     onChanged: (value) {
                       widget.onChanged?.call(value);
                       setState(() {});
@@ -79,7 +91,7 @@ class _InputSearchState extends State<InputSearch> {
                     // inputFormatters: [
                     //   LengthLimitingTextInputFormatter(30)
                     // ],
-                    style: TextStyle(
+                    style: widget.style ?? TextStyle(
                       color: textColor,
                       fontSize: 14,
                     ),
@@ -87,31 +99,44 @@ class _InputSearchState extends State<InputSearch> {
                     autofocus: widget.autofocus,
                     autocorrect: false,
                     decoration: InputDecoration(
-                      hintText: widget.hintText,
-                      hintStyle: TextStyle(color: hintTextColor.withAlpha(100)),
-                      // focusedBorder: InputBorder.none,
-                      // enabledBorder: InputBorder.none,
-                      // errorBorder: InputBorder.none,
-                      // disabledBorder: InputBorder.none,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding:
-                          EdgeInsets.only(left: Spacing.small, right: 0),
-                    ),
+                        isDense: true,
+                        hintText: widget.hintText,
+                        hintStyle:
+                            TextStyle(color: hintTextColor.withAlpha(100)),
+                        // focusedBorder: InputBorder.none,
+                        // enabledBorder: InputBorder.none,
+                        // errorBorder: InputBorder.none,
+                        // disabledBorder: InputBorder.none,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: EdgeInsets.zero),
                   ),
                 ),
                 if (_textEditingController.text.isNotEmpty)
                   SIconButton(
-                    child: SvgPicture.asset(
-                      'assets/images/svg/x-fill.svg',
-                      width: 20,
-                      height: 20,
-                      colorFilter: ColorFilter.mode(
-                          Theme.of(context).colorScheme.surface.withAlpha(200),
-                          BlendMode.srcIn),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: onSurface,
+                      ),
+                      padding: EdgeInsets.all(4),
+                      child: Icon(
+                        CupertinoIcons.xmark,
+                        size: 14,
+                        color: bg,
+                      ),
                     ),
+                    // child: SvgPicture.asset(
+                    //   'assets/images/svg/x-fill.svg',
+                    //   width: 20,
+                    //   height: 20,
+                    //   package: 'core',
+                    //   colorFilter: ColorFilter.mode(
+                    //       Theme.of(context).colorScheme.surface.withAlpha(200),
+                    //       BlendMode.srcIn),
+                    // ),
                     onTap: () {
                       _textEditingController.clear();
                       widget.onChanged?.call("");

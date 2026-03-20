@@ -1,4 +1,6 @@
-import 'package:easy_localization/easy_localization.dart';
+import 'dart:math';
+
+import 'package:core/core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -62,40 +64,344 @@ class Cupertino {
     );
   }
 
-  static Future<T?> showDatePicker<T>({
-    required BuildContext context,
+  static Future<DateTime?> showDatePicker({
+    BuildContext? context,
     DateTime? initialDateTime,
     CupertinoDatePickerMode mode = CupertinoDatePickerMode.date,
     use24hFormat = false,
     showDayOfWeek = false,
-    required Function(DateTime) onDateTimeChanged,
-  }) {
-    return showCupertinoModalPopup<T>(
-      context: context,
-      builder: (BuildContext context) => Container(
-        height: 216,
-        padding: const EdgeInsets.only(top: 6.0),
-        // The Bottom margin is provided to align the popup above the system
-        // navigation bar.
-        margin:
-            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        // Provide a background color for the popup.
-        color: CupertinoColors.systemBackground.resolveFrom(context),
-        // Use a SafeArea widget to avoid system overlaps.
-        child: SafeArea(
-          top: false,
-          child: CupertinoDatePicker(
-            initialDateTime: initialDateTime,
-            mode: mode,
-            use24hFormat: use24hFormat,
-            // This shows day of week alongside day of month
-            // showDayOfWeek: showDayOfWeek,
-            // This is called when the user changes the date.
-            onDateTimeChanged: onDateTimeChanged,
+    required Function(DateTime)? onDateTimeComplete,
+    Function(DateTime)? onDateTimeChange,
+    bool isRequired = false,
+    DateTime? minimumDate,
+    DateTime? maximumDate,
+    final bool allowClear = false,
+    final Function()? onClear,
+    String? title,
+  }) async {
+    final disableMaxDate = minimumDate != null &&
+        maximumDate != null &&
+        minimumDate.compareTo(maximumDate) >= 0;
+    final onSurface = getOnSurface(Get.context!);
+
+    DateTime time = initialDateTime ?? DateTime.now();
+    final result = await showCupertinoModalPopup<bool?>(
+      context: context ?? Get.context!,
+      builder: (BuildContext context) => GestureDetector(
+        onTap: () {
+          // if (isRequired) {
+          //   Navigator.pop(context, true);
+          // }
+        },
+        child: Material(
+          color: Colors.transparent,
+          child: IntrinsicHeight(
+            child: Container(
+              color: CupertinoColors.systemBackground.resolveFrom(context),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(
+                      Spacing.medium,
+                    ),
+                    decoration: BoxDecoration(
+                        border: Border(
+                            bottom:
+                                BorderSide(color: onSurface.withAlpha(30)))),
+                    child: Column(
+                      children: [
+                        if (isRequired)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pop(context, true);
+                                },
+                                child: Text(
+                                  "Close".tr,
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.deepOrange),
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pop(context, false);
+                                },
+                                child: Text(
+                                  "Cancel".tr,
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                              if (title != null)
+                                Expanded(
+                                    child: STitle(
+                                  title: title,
+                                  textAlign: TextAlign.center,
+                                )),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pop(context, true);
+                                },
+                                child: Text(
+                                  "Save".tr,
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.deepOrange),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    height: 216,
+                    padding: const EdgeInsets.only(top: Spacing.medium),
+
+                    // The Bottom margin is provided to align the popup above the system
+                    // navigation bar.
+                    margin: EdgeInsets.only(
+                        // top: Spacing.medium,
+                        bottom: max(MediaQuery.of(context).viewInsets.bottom,
+                            MediaQuery.of(context).padding.bottom)),
+                    // Provide a background color for the popup.
+                    // color:
+                    //     CupertinoColors.systemBackground.resolveFrom(context),
+                    // Use a SafeArea widget to avoid system overlaps.
+                    child: CupertinoDatePicker(
+                      initialDateTime: initialDateTime,
+                      mode: mode,
+                      use24hFormat: use24hFormat,
+                      minimumDate: disableMaxDate ? null : minimumDate,
+                      maximumDate: disableMaxDate ? null : maximumDate,
+                      // This shows day of week alongside day of month
+                      // showDayOfWeek: showDayOfWeek,
+                      // This is called when the user changes the date.
+                      onDateTimeChanged: (value) {
+                        time = value;
+                        onDateTimeChange?.call(value);
+                      },
+                    ),
+                  ),
+                  if (allowClear)
+                    SizedBox(
+                      width: double.infinity,
+                      child: SButton(
+                        color: ButtonColor.grey,
+                        textColor: Colors.red,
+                        icon: Icons.clear,
+                        child: Text("Clear"),
+                        onTap: () {
+                          onClear?.call();
+                          Navigator.pop(context, false);
+                        },
+                      ),
+                    )
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
+    if (result != null && result) {
+      onDateTimeComplete?.call(time);
+      return time;
+    }
+
+    return null;
+  }
+
+  static Future<DateTimeRange?> showDateRangePicker({
+    required BuildContext context,
+    DateTimeRange? initialDateTime,
+    CupertinoDatePickerMode mode = CupertinoDatePickerMode.date,
+    use24hFormat = false,
+    showDayOfWeek = false,
+    required Function(DateTimeRange)? onDateTimeComplete,
+    Function(DateTimeRange)? onDateTimeChange,
+    bool isRequired = false,
+    DateTime? minimumDate,
+    DateTime? maximumDate,
+    final bool allowClear = false,
+    final Function()? onClear,
+    final bool disabledStart = false,
+    final bool disabledEnd = false,
+  }) async {
+    DateTimeRange time = initialDateTime ??
+        DateTimeRange(start: DateTime.now(), end: DateTime.now());
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final result = await showCupertinoModalPopup<bool?>(
+      context: context,
+      builder: (BuildContext context) => GestureDetector(
+        onTap: () {
+          if (isRequired) {
+            Navigator.pop(context, true);
+          }
+        },
+        child: Material(
+          color: Colors.transparent,
+          child: IntrinsicHeight(
+            child: Container(
+              color: CupertinoColors.systemBackground.resolveFrom(context),
+              padding: EdgeInsets.all(Spacing.medium),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!isRequired)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context, false);
+                          },
+                          child: Text(
+                            "Cancel",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context, true);
+                          },
+                          child: Text(
+                            "Save",
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.deepOrange),
+                          ),
+                        ),
+                      ],
+                    ),
+                  Container(
+                    // height: 216 * 2,
+                    padding: const EdgeInsets.only(top: 6.0),
+                    // The Bottom margin is provided to align the popup above the system
+                    // navigation bar.
+                    margin: EdgeInsets.only(
+                        top: Spacing.medium,
+                        bottom: max(MediaQuery.of(context).viewInsets.bottom,
+                            MediaQuery.of(context).padding.bottom)),
+                    // Provide a background color for the popup.
+                    // color:
+                    //     CupertinoColors.systemBackground.resolveFrom(context),
+                    // Use a SafeArea widget to avoid system overlaps.
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            SizedBox(width: 50, child: Text("From")),
+                            Expanded(
+                              child: disabledStart
+                                  ? Container(
+                                      alignment: Alignment.center,
+                                      padding: EdgeInsets.symmetric(
+                                          vertical: Spacing.medium),
+                                      child: Text(
+                                          time.start.format("MMMM dd, yyyy"),
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(fontSize: 26)),
+                                    )
+                                  : Container(
+                                      height: 216,
+                                      child: CupertinoDatePicker(
+                                        initialDateTime: time.start,
+                                        mode: mode,
+                                        use24hFormat: use24hFormat,
+                                        minimumDate: minimumDate,
+                                        maximumDate: maximumDate,
+                                        // This shows day of week alongside day of month
+                                        // showDayOfWeek: showDayOfWeek,
+                                        // This is called when the user changes the date.
+                                        onDateTimeChanged: (value) {
+                                          time = DateTimeRange(
+                                              start: value, end: time.end);
+                                          onDateTimeChange?.call(time);
+                                        },
+                                      ),
+                                    ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          height: 0.5,
+                          color: onSurface.withAlpha(50),
+                        ),
+                        Row(
+                          children: [
+                            SizedBox(width: 50, child: Text("To")),
+                            Expanded(
+                              child: Container(
+                                height: 216,
+                                child: CupertinoDatePicker(
+                                  initialDateTime: time.end,
+                                  mode: mode,
+                                  use24hFormat: use24hFormat,
+                                  minimumDate: minimumDate,
+                                  maximumDate: maximumDate,
+                                  // This shows day of week alongside day of month
+                                  // showDayOfWeek: showDayOfWeek,
+                                  // This is called when the user changes the date.
+                                  onDateTimeChanged: (value) {
+                                    time = DateTimeRange(
+                                        start: time.start, end: value);
+                                    onDateTimeChange?.call(time);
+                                    // time = value;
+                                    // onDateTimeChange?.call(value);
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (allowClear)
+                    SizedBox(
+                      width: double.infinity,
+                      child: SButton(
+                        color: ButtonColor.grey,
+                        textColor: Colors.red,
+                        icon: Icons.clear,
+                        child: Text("Clear"),
+                        onTap: () {
+                          onClear?.call();
+                          Navigator.pop(context, false);
+                        },
+                      ),
+                    )
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    if (result != null && result) {
+      onDateTimeComplete?.call(time);
+      return time;
+    }
+
+    return null;
   }
 
   static void picker({
@@ -171,7 +477,7 @@ class Cupertino {
       actions: [
         CupertinoDialogAction(
           isDefaultAction: true,
-          child: Text(exitText ?? tr("Quit")),
+          child: Text(exitText ?? "Quit".tr),
           onPressed: onExit ??
               () {
                 Navigator.pop(context);
@@ -179,7 +485,7 @@ class Cupertino {
               },
         ),
         CupertinoDialogAction(
-          child: Text(cancelText ?? tr("Cancel")),
+          child: Text(cancelText ?? "Cancel".tr),
           isDestructiveAction: true,
           onPressed: onCancel ??
               () {

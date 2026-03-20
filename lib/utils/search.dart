@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:core/utils/sqlite.dart';
+import 'package:core/sqllite/sqlite.dart';
 
 class SearchModel {
   final String query;

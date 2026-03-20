@@ -1,8 +1,5 @@
-import 'package:get/get.dart';
-import 'package:get/get_rx/src/rx_types/rx_types.dart';
-
 class QueryController<T> {
-  bool loading = false;
+  bool loading = true;
   T? _data;
   Future<T> Function() fetch;
   void Function(void Function() fn) setState;
@@ -12,7 +9,9 @@ class QueryController<T> {
     required this.fetch,
     required this.setState,
     this.init = false,
+    T? initialData,
   }) {
+    _data = initialData;
     if (this.init) {
       call();
     }
@@ -31,4 +30,27 @@ class QueryController<T> {
   }
 
   T? get data => _data;
+}
+
+class QueryListController<T> extends QueryController<List<T>> {
+  QueryListController(
+      {required super.fetch,
+      required super.setState,
+      super.init,
+      super.initialData});
+
+
+  void add(T data) {
+    if (_data is List) {
+      (_data as List).add(data);
+      setState(() {});
+    }
+  }
+
+  void remove(T data) {
+    if (_data is List) {
+      (_data as List).remove(data);
+      setState(() {});
+    }
+  }
 }

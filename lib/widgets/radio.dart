@@ -11,6 +11,7 @@ class SRadio extends StatelessWidget {
     this.icon,
     this.size = 20,
     this.onChanged,
+    this.padding = 0,
   });
   final bool checked;
   final Color? color;
@@ -19,6 +20,7 @@ class SRadio extends StatelessWidget {
   final Widget? icon;
   final double size;
   final Function(bool)? onChanged;
+  final double padding;
 
   @override
   Widget build(BuildContext context) {
@@ -38,34 +40,36 @@ class SRadio extends StatelessWidget {
     //     ? (this.color ?? Theme.of(context).colorScheme.primary)
     //     : Colors.grey.shade500;
     return GestureDetector(
-      onTap: () {
-        onChanged?.call(!checked);
-      },
-      child: Container(
-        width: size,
-        height: size,
-        // padding: EdgeInsets.all(3),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: checked
-              ? color ?? Theme.of(context).primaryColor
-              : unCheckedColor ?? Colors.transparent,
-          borderRadius: BorderRadius.all(Radius.circular(100)),
-          border: Border.all(
-            color: borderColor ?? Colors.transparent,
+      onTap: onChanged != null ? (() => onChanged?.call(!checked)) : null,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: EdgeInsets.all(padding),
+        child: Container(
+          width: size,
+          height: size,
+          // padding: EdgeInsets.all(3),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: checked
+                ? color ?? Theme.of(context).primaryColor
+                : unCheckedColor ?? Colors.transparent,
+            borderRadius: BorderRadius.all(Radius.circular(100)),
+            border: Border.all(
+              color: borderColor ?? Colors.transparent,
+            ),
           ),
+          child: checked
+              ? icon ?? Icon(Icons.check, color: Colors.white, size: 12)
+              // SvgPicture.asset(
+              //   'assets/images/svg/check.svg',
+              //   fit: BoxFit.contain,
+              //   colorFilter: ColorFilter.mode(
+              //     Colors.white,
+              //     BlendMode.srcIn,
+              //   ),
+              // )
+              : null,
         ),
-        child: checked
-            ? icon ?? Icon(Icons.check, color: Colors.white, size: 12)
-            // SvgPicture.asset(
-            //   'assets/images/svg/check.svg',
-            //   fit: BoxFit.contain,
-            //   colorFilter: ColorFilter.mode(
-            //     Colors.white,
-            //     BlendMode.srcIn,
-            //   ),
-            // )
-            : null,
       ),
     );
   }

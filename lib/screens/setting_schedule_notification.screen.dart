@@ -1,10 +1,7 @@
 import 'package:core/core.dart';
-import 'package:core/models/notification/model.dart';
-import 'package:core/services/notification.service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 
 // class Schedule {
 //   final DateTime from;
@@ -102,11 +99,11 @@ class _SettingScheduleNotificationScreenState
   @override
   void initState() {
     super.initState();
-    NotificationService.getSchedule().then((value) {
-      setState(() {
-        schedules = value;
-      });
-    });
+    // NotificationService.getSchedule().then((value) {
+    //   setState(() {
+    //     schedules = value;
+    //   });
+    // });
   }
 
   // void _addSchedule() async {
@@ -125,7 +122,7 @@ class _SettingScheduleNotificationScreenState
   void _action(ScheduleItem? oldSchedule) async {
     final result = await Modal.showBottomSheet(
       context: context,
-      size: 0.85,
+      initialSize: 0.85,
       builder: (context, scrollController) => _AddOrEditScreen(
         schedule: oldSchedule,
       ),
@@ -177,7 +174,8 @@ class _SettingScheduleNotificationScreenState
         ),
         actions: [
           SIconButton(
-            svgPath: 'assets/images/svg/plus.svg',
+            // svgPath: 'assets/images/svg/plus.svg',
+            child: Icon(CupertinoIcons.plus),
             onTap: () => _action(null),
           ),
         ],
@@ -222,9 +220,9 @@ class _SettingScheduleNotificationScreenState
                   setState(() {
                     schedules[index].isActive = active;
                   });
-                  NotificationService.addOrEdit(
-                    NotificationScheduleItem.fromSchedule(schedules[index]),
-                  );
+                  // NotificationService.addOrEdit(
+                  //   NotificationScheduleItem.fromSchedule(schedules[index]),
+                  // );
                 },
               ),
             ),
@@ -337,18 +335,18 @@ class _AddOrEditScreenState extends State<_AddOrEditScreen> {
 
   void _save() async {
     if (widget.schedule != null) {
-      final result = await NotificationService.addOrEdit(
-        NotificationScheduleItem.fromSchedule(ScheduleItem(
-          id: widget.schedule!.id,
-          from: from,
-          to: to,
-          repeat: _selected,
-        )),
-      );
-      Get.back(result: {
-        'action': 'edit',
-        'schedule': result,
-      });
+      // final result = await NotificationService.addOrEdit(
+      //   NotificationScheduleItem.fromSchedule(ScheduleItem(
+      //     id: widget.schedule!.id,
+      //     from: from,
+      //     to: to,
+      //     repeat: _selected,
+      //   )),
+      // );
+      // Get.back(result: {
+      //   'action': 'edit',
+      //   'schedule': result,
+      // });
     } else {
       final schedule = ScheduleItem(
         id: uniqueID(),
@@ -356,13 +354,13 @@ class _AddOrEditScreenState extends State<_AddOrEditScreen> {
         to: to,
         repeat: _selected,
       );
-      final result = await NotificationService.addOrEdit(
-        NotificationScheduleItem.fromSchedule(schedule),
-      );
-      Get.back(result: {
-        'action': 'add',
-        'schedule': result,
-      });
+      // final result = await NotificationService.addOrEdit(
+      //   NotificationScheduleItem.fromSchedule(schedule),
+      // );
+      // Get.back(result: {
+      //   'action': 'add',
+      //   'schedule': result,
+      // });
     }
 
     // Get.back(
@@ -484,15 +482,18 @@ class _AddOrEditScreenState extends State<_AddOrEditScreen> {
                                       color: onSurface.withAlpha(100),
                                     ),
                                   ),
-                                  SvgPicture.asset(
-                                    "assets/images/svg/chevron-right.svg",
-                                    width: 16,
-                                    height: 16,
-                                    colorFilter: ColorFilter.mode(
-                                      onSurface.withAlpha(100),
-                                      BlendMode.srcIn,
-                                    ),
-                                  )
+                                  Icon(CupertinoIcons.chevron_right,
+                                      size: 16,
+                                      color: onSurface.withAlpha(100)),
+                                  // SvgPicture.asset(
+                                  //   "assets/images/svg/chevron-right.svg",
+                                  //   width: 16,
+                                  //   height: 16,
+                                  //   colorFilter: ColorFilter.mode(
+                                  //     onSurface.withAlpha(100),
+                                  //     BlendMode.srcIn,
+                                  //   ),
+                                  // )
                                 ],
                               )
                             ],
@@ -574,15 +575,17 @@ class _EditRepeatScreenState extends State<_EditRepeatScreen> {
                   child: Row(
                     spacing: Spacing.xSmall,
                     children: [
-                      SvgPicture.asset(
-                        "assets/images/svg/chevron-left.svg",
-                        width: 16,
-                        height: 16,
-                        colorFilter: ColorFilter.mode(
-                          Colors.orange,
-                          BlendMode.srcIn,
-                        ),
-                      ),
+                      Icon(CupertinoIcons.chevron_left,
+                          size: 16, color: Colors.orange),
+                      // SvgPicture.asset(
+                      //   "assets/images/svg/chevron-left.svg",
+                      //   width: 16,
+                      //   height: 16,
+                      //   colorFilter: ColorFilter.mode(
+                      //     Colors.orange,
+                      //     BlendMode.srcIn,
+                      //   ),
+                      // ),
                       Text(
                         tr("Back"),
                         style: TextStyle(
@@ -638,7 +641,7 @@ class _RepeatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
-    return HighlightTap(
+    return OpacityTap(
       onTap: () {
         onChanged(!selected);
       },
@@ -651,16 +654,20 @@ class _RepeatItem extends StatelessWidget {
           child: Row(
             children: [
               Expanded(child: Text(title)),
-              if (selected)
-                SvgPicture.asset(
-                  "assets/images/svg/check.svg",
-                  width: 20,
-                  height: 20,
-                  colorFilter: ColorFilter.mode(
-                    Colors.orange,
-                    BlendMode.srcIn,
-                  ),
-                )
+              Opacity(
+                opacity: selected ? 1 : 0,
+                child: Icon(CupertinoIcons.check_mark_circled_solid,
+                    size: 20, color: Colors.orange),
+              ),
+              // SvgPicture.asset(
+              //   "assets/images/svg/check.svg",
+              //   width: 20,
+              //   height: 20,
+              //   colorFilter: ColorFilter.mode(
+              //     Colors.orange,
+              //     BlendMode.srcIn,
+              //   ),
+              // )
             ],
           )),
     );

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
@@ -223,26 +225,36 @@ class StorageService {
     required R value,
     Function(T value)? toJson,
     T Function(dynamic value)? fromJson,
-  }) {
+    T? defaultValue,
+    FutureOr<T> Function(T value)? beforeSave,
+    FutureOr<void> Function(T value)? onChanged,
+  }) async {
     final _vl = get(key);
     if (_vl != null) {
-      final parse = fromJson?.call(_vl) ?? _vl;
-      if (value is RxList) {
-        (value as Rx).value = parse;
-      } else if (value is RxMap) {
-        (value as RxMap).value = parse;
-      } else {
-        (value as Rx).value = parse;
+      try {
+        var parse = fromJson?.call(_vl) ?? _vl;
+        parse = await beforeSave?.call(parse) ?? parse;
+        print("parse: $key --> $parse");
+        if (value is RxList) {
+          (value as Rx).value = parse;
+        } else if (value is RxMap) {
+          (value as RxMap).value = parse;
+        } else {
+          (value as Rx).value = parse;
+        }
+      } catch (e) {
+        print("ERROR: $key: $_vl");
+        if (defaultValue != null) {
+          (value as Rx).value = defaultValue;
+        }
       }
-      // try {
-        // (value as Rx<T>).value = fromJson?.call(_vl) ?? _vl;
-      // } catch (e) {
-      //   print("$key: $_vl");
-      // }
+    }else if (defaultValue != null) {
+      (value as Rx).value = defaultValue;
     }
-
-    ever(value, (val) {
-      set(key, toJson?.call(val) ?? val);
+    ever(value, (val) async {
+      final _vl = await beforeSave?.call(val) ?? val;
+      set(key, toJson?.call(_vl) ?? _vl);
+      await onChanged?.call(_vl);
     });
   }
 

@@ -1,4 +1,5 @@
 import 'package:core/widgets/icon_button.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class SAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -13,10 +14,11 @@ class SAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.rightPadding = 8,
     this.bottomPadding = 0,
     this.bottom,
-    this.height,
+    this.height = 48,
     this.padding,
     this.borderBottom = false,
     this.titleCenter = false,
+    this.subtitle,
   });
 
   final Widget? leading;
@@ -28,18 +30,19 @@ class SAppBar extends StatelessWidget implements PreferredSizeWidget {
   final double rightPadding;
   final double bottomPadding;
   final Widget? bottom;
-  final double? height;
+  final double height;
   final EdgeInsets? padding;
   final bool borderBottom;
   final bool? titleCenter;
+  final Widget? subtitle;
 
   @override
-  Size get preferredSize =>
-      Size.fromHeight(height ?? 48 + (borderBottom ? 1 : 0));
+  Size get preferredSize => Size.fromHeight(height + (borderBottom ? 1 : 0));
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return Container(
       alignment: Alignment.center,
       decoration: BoxDecoration(
@@ -60,6 +63,7 @@ class SAppBar extends StatelessWidget implements PreferredSizeWidget {
                 left: padding?.left ?? (leading != null ? 0 : leftPadding),
                 right: padding?.right ?? rightPadding,
                 bottom: padding?.bottom ?? bottomPadding,
+                top: padding?.top ?? 0,
               ),
               child: Row(
                 children: [
@@ -72,14 +76,36 @@ class SAppBar extends StatelessWidget implements PreferredSizeWidget {
                         if (leading != null) leading!,
                         Expanded(
                           flex: 1,
-                          child: DefaultTextStyle(
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.onSurface,
-                              letterSpacing: -0.5,
-                            ),
-                            child: title ?? Container(),
+                          child: Column(
+                            crossAxisAlignment: titleCenter == true
+                                ? CrossAxisAlignment.center
+                                : CrossAxisAlignment.start,
+                            children: [
+                              DefaultTextStyle(
+                                textAlign: titleCenter == true
+                                    ? TextAlign.center
+                                    : TextAlign.start,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: onSurface,
+                                  letterSpacing: -0.5,
+                                ),
+                                child: title ?? Container(),
+                              ),
+                              if (subtitle != null)
+                                DefaultTextStyle(
+                                  textAlign: titleCenter == true
+                                      ? TextAlign.center
+                                      : TextAlign.start,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: onSurface.withAlpha(150),
+                                    letterSpacing: -0.5,
+                                  ),
+                                  child: subtitle ?? Container(),
+                                ),
+                            ],
                           ),
                         ),
 
@@ -157,7 +183,9 @@ class SIconBack extends StatelessWidget {
           Navigator.pop(context);
         }
       },
-      svgPath: 'assets/images/svg/chevron-left.svg',
+      child: Icon(CupertinoIcons.chevron_left),
+      // package: 'core',
+      // svgPath: 'assets/images/svg/chevron-left.svg',
     );
   }
 }

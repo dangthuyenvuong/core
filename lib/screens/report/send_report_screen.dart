@@ -1,15 +1,16 @@
 import 'dart:typed_data';
 
 import 'package:core/core.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class ReportScreen extends StatefulWidget {
-  const ReportScreen({
+class SendReportScreen extends StatefulWidget {
+  const SendReportScreen({
     super.key,
     this.images,
     this.allowRemoveImage = true,
     this.allowAddImage = true,
-    this.title = 'Góp ý và báo lỗi',
+    this.title,
     this.clearImages = true,
     this.leading,
     this.trailing,
@@ -18,21 +19,21 @@ class ReportScreen extends StatefulWidget {
   final List<Uint8List>? images;
   final bool allowRemoveImage;
   final bool allowAddImage;
-  final String title;
+  final String? title;
   final bool clearImages;
   final Widget? leading;
   final Widget? trailing;
   final bool isFromList;
 
   @override
-  State<ReportScreen> createState() => _ReportScreenState();
+  State<SendReportScreen> createState() => _SendReportScreenState();
 }
 
-class _ReportScreenState extends State<ReportScreen> {
+class _SendReportScreenState extends State<SendReportScreen> {
   final reportController = Get.find<ReportController>();
   bool enabledSend = false;
   final images = <Uint8List>[];
-  late TextEditingController contentController;
+  late InputController contentController;
 
   @override
   void initState() {
@@ -42,8 +43,7 @@ class _ReportScreenState extends State<ReportScreen> {
     } else {
       images.addAll(reportController.images);
     }
-    contentController =
-        TextEditingController(text: reportController.content.value);
+    contentController = InputController(value: reportController.content.value);
 
     contentController.addListener(() {
       reportController.content.value = contentController.text;
@@ -69,33 +69,59 @@ class _ReportScreenState extends State<ReportScreen> {
       // backgroundColor: Colors.transparent,
       appBar: SAppBar(
         borderBottom: true,
+        titleCenter: true,
         padding: EdgeInsets.only(left: Spacing.medium, right: Spacing.medium),
         leading: OpacityTap(
-          child: Text("Hủy", style: TextStyle(fontWeight: FontWeight.bold)),
+          child:
+              Text("Cancel".tr, style: TextStyle(fontWeight: FontWeight.bold)),
           onTap: () {
             if (!enabledSend) {
               _quit();
               return;
             }
 
-            Modal.showWarningOutPage(
-              context: context,
-              title: 'Thoát khi chưa hoàn tất?',
-              message:
-                  'Ý kiến đóng góp của bạn giúp chúng tôi cải thiện SpaceEnglish. Nếu bây giờ bạn rời đi, báo cáo của bạn sẽ không được gửi.',
-              cancelText: 'Tiếp tục chỉnh sửa',
-              confirmText: 'Bỏ báo cáo',
-              onConfirm: () {
-                _quit();
-              },
-            );
+            Modal.showAlertDialog(
+                context: context,
+                title: 'Cancel when not complete?'.tr,
+                message:
+                    'Your feedback helps us improve SpaceEnglish. If you leave now, your report will not be sent.'
+                        .tr,
+                actions: [
+                  CupertinoDialogAction(
+                    child: Text('Cancel report'.tr),
+                    isDestructiveAction: true,
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _quit();
+                    },
+                  ),
+                  CupertinoDialogAction(
+                    child: Text('Continue editing'.tr),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                ]);
+
+            // Modal.showWarningOutPage(
+            //   context: context,
+            //   title: 'Thoát khi chưa hoàn tất?',
+            //   message:
+            //       'Ý kiến đóng góp của bạn giúp chúng tôi cải thiện SpaceEnglish. Nếu bây giờ bạn rời đi, báo cáo của bạn sẽ không được gửi.',
+            //   cancelText: 'Tiếp tục chỉnh sửa',
+            //   confirmText: 'Bỏ báo cáo',
+            //   onConfirm: () {
+            //     _quit();
+            //   },
+            // );
           },
         ),
-        title: Text(widget.title, textAlign: TextAlign.center),
+        title: Text(widget.title ?? "Feedback or report".tr,
+            textAlign: TextAlign.center),
         actions: [
           OpacityTap(
             disabled: !enabledSend,
-            child: Text("Gửi",
+            child: Text("Send".tr,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: enabledSend ? Constant.red : Colors.grey,
@@ -119,9 +145,14 @@ class _ReportScreenState extends State<ReportScreen> {
                   padding: EdgeInsets.only(bottom: Spacing.small),
                   child: widget.leading!,
                 ),
-              InputField(
-                labelText: 'Nội dung góp ý hoặc báo lỗi',
-                isMultiline: true,
+              Text("Content feedback or report".tr,
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              SInput(
+                // labelText: 'Nội dung góp ý hoặc báo lỗi',
+                multiline: true,
+                minLine: 1,
+                maxLine: 100,
+                // isMultiline: true,
                 autofocus: true,
                 controller: contentController,
               ),
@@ -129,7 +160,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: Spacing.medium,
                 children: [
-                  Text('Hình ảnh đính kèm',
+                  Text('Attached images'.tr,
                       style: TextStyle(
                         // fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -143,8 +174,8 @@ class _ReportScreenState extends State<ReportScreen> {
                           spacing: Spacing.medium,
                           children: List.generate(
                             images!.length,
-                            (index) => _ImageItem(
-                                image: images![index],
+                            (index) => ReportImageItem(
+                                image: images[index],
                                 onTap: widget.allowRemoveImage
                                     ? () {
                                         images.removeAt(index);
@@ -159,10 +190,11 @@ class _ReportScreenState extends State<ReportScreen> {
                     ),
                 ],
               ),
-                
+
               if (widget.allowAddImage)
                 Text(
-                    "Bạn có thể chụp ảnh màn hình bị lỗi, chúng tôi sẽ xem xét tài liệu bạn gửi và xử lý sớm nhất có thể.",
+                    "You can take a screenshot of the error screen, we will review the document you sent and process it as soon as possible."
+                        .tr,
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context)
@@ -180,21 +212,48 @@ class _ReportScreenState extends State<ReportScreen> {
                     spacing: 4,
                     children: [
                       Icon(Icons.camera),
-                      Text('Chụp ảnh màn hình'),
+                      Text('Upload Image'.tr),
                     ],
                   ),
                   onTap: () {
-                    // reportController.enabledCaptureScreen.value = true;
+                    // showImagePicker(context: context);
+                    showModalBottomSheet(
+                        context: context,
+                        enableDrag: true,
+                        backgroundColor: Colors.transparent,
+                        // barrierColor: Colors.black.withAlpha(100),
+                        builder: (context) => CupertinoActionSheet(
+                              title: Text('Upload Image'.tr),
+                              actions: [
+                                CupertinoActionSheetAction(
+                                    child: Text('Capture Screen'.tr),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      GlobalOverlay().show(context);
+                                      Navigator.pop(context);
+                                      if (widget.isFromList) {
+                                        Navigator.pop(context);
+                                      }
+                                    }),
+                                CupertinoActionSheetAction(
+                                    child: Text('Camera'.tr), onPressed: () {}),
+                                CupertinoActionSheetAction(
+                                    child: Text('Gallery'.tr),
+                                    onPressed: () {}),
+                              ],
+                              cancelButton: CupertinoActionSheetAction(
+                                child: Text('Cancel'.tr),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ));
+
+                    // GlobalOverlay().show(context);
                     // Navigator.pop(context);
                     // if (widget.isFromList) {
                     //   Navigator.pop(context);
                     // }
-                
-                    GlobalOverlay().show(context);
-                    Navigator.pop(context);
-                    if (widget.isFromList) {
-                      Navigator.pop(context);
-                    }
                   },
                 )
               ],
@@ -211,18 +270,21 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 }
 
-class _ImageItem extends StatelessWidget {
-  const _ImageItem({
+class ReportImageItem extends StatelessWidget {
+  const ReportImageItem({
     super.key,
-    required this.image,
+    this.image,
+    this.imageUrl,
     this.onTap,
   });
 
-  final Uint8List image;
+  final Uint8List? image;
+  final String? imageUrl;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return Stack(
       children: [
         Container(
@@ -233,22 +295,21 @@ class _ImageItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(Spacing.large),
             // border: Border.all(color: Colors.transparent),
             boxShadow: [
-              BoxShadow(
-                  color: Theme.of(context).colorScheme.surface,
-                  spreadRadius: 1),
+              BoxShadow(color: onSurface.withAlpha(50), spreadRadius: 1),
             ],
           ),
           width: 200,
-          child: Image.memory(image),
+          child:
+              image != null ? Image.memory(image!) : Image.network(imageUrl!),
         ),
         if (onTap != null)
           Positioned(
             right: Spacing.small,
             top: Spacing.small,
             child: SIconButton(
-              bgColor: Theme.of(context).colorScheme.onSurface.withAlpha(50),
-              svgPath: 'assets/images/svg/x.svg',
+              bgColor: onSurface.withAlpha(50),
               onTap: onTap,
+              child: Icon(Icons.close),
             ),
           )
       ],
@@ -288,22 +349,22 @@ class GlobalOverlay {
                 SButton(
                   color: ButtonColor.grey,
                   child: Text(
-                    'Hủy',
+                    'Cancel'.tr,
                     style: TextStyle(color: Colors.white),
                   ),
                   onTap: () {
-                    Get.to(() => ReportScreen());
+                    Get.to(() => SendReportScreen());
                     hide();
                     // reportController.enabledCaptureScreen.value = false;
                   },
                 ),
                 SButton(
-                  child: Text('Chụp ảnh màn hình'),
+                  child: Text("Capture Screen".tr),
                   onTap: () async {
                     hide();
                     Future.delayed(Duration(milliseconds: 100), () async {
                       await Get.find<ReportController>().captureScreenshot();
-                      Get.to(() => ReportScreen());
+                      Get.to(() => SendReportScreen());
                     });
 
                     // reportController.enabledCaptureScreen.value = false;

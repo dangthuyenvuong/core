@@ -86,10 +86,11 @@ class _SBottomBarNavigationState extends State<SBottomBarNavigation> {
       final index = _keys.indexOf(router);
       HapticFeedback.mediumImpact();
       if (currentKey == router) {
-        Get.find<SystemController>()
-            .getNavigatorKey(index)
-            .currentState
-            ?.popUntil((route) => route.isFirst);
+        Get.find<SystemController>().popToFirst(router);
+        // Get.find<SystemController>()
+        //     .getNavigatorKey(index)
+        //     .currentState
+        //     ?.popUntil((route) => route.isFirst);
       } else {
         currentKey = router;
         widget.pageController.jumpToPage(index);
@@ -352,7 +353,7 @@ class SBottomMenuItem extends StatelessWidget {
                   Badge(
                     label: Text('${(badgeCount ?? 0) > 9 ? '9+' : badgeCount}'),
                     isLabelVisible: (badgeCount ?? 0) > 0,
-
+                    offset: Offset(10, -5),
                     // badgeContent: Text(badgeCount.toString()),
                     // showBadge: badgeCount != null,
                     child: Opacity(

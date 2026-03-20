@@ -6,17 +6,26 @@ part of 'model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$UserModelImpl _$$UserModelImplFromJson(Map<String, dynamic> json) =>
-    _$UserModelImpl(
-      id: json['id'] as String?,
-      full_name: json['full_name'] as String?,
-      avatar: json['avatar'] as String?,
-      account_id: json['account_id'] as String?,
-      email: json['email'] as String?,
-      phone: json['phone'] as String?,
-      gender: $enumDecodeNullable(_$GenderEnumMap, json['gender']),
-      birthday: _$JsonConverterFromJson<String, DateTime>(
-          json['birthday'], const DateTimeConverter().fromJson),
+_$UserModelImpl _$$UserModelImplFromJson(Map json) => $checkedCreate(
+      r'_$UserModelImpl',
+      json,
+      ($checkedConvert) {
+        final val = _$UserModelImpl(
+          id: $checkedConvert('id', (v) => v as String),
+          full_name: $checkedConvert('full_name', (v) => v as String?),
+          avatar: $checkedConvert('avatar', (v) => v as String?),
+          account_id: $checkedConvert('account_id', (v) => v as String?),
+          email: $checkedConvert('email', (v) => v as String?),
+          phone: $checkedConvert('phone', (v) => v as String?),
+          gender: $checkedConvert(
+              'gender', (v) => $enumDecodeNullable(_$GenderEnumMap, v)),
+          birthday: $checkedConvert(
+              'birthday',
+              (v) => _$JsonConverterFromJson<String, DateTime>(
+                  v, const DateTimeConverter().fromJson)),
+        );
+        return val;
+      },
     );
 
 Map<String, dynamic> _$$UserModelImplToJson(_$UserModelImpl instance) =>
@@ -35,6 +44,7 @@ Map<String, dynamic> _$$UserModelImplToJson(_$UserModelImpl instance) =>
 const _$GenderEnumMap = {
   Gender.male: 'male',
   Gender.female: 'female',
+  Gender.other: 'other',
 };
 
 Value? _$JsonConverterFromJson<Json, Value>(

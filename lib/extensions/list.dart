@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'package:get/utils.dart';
+
 extension ListX<T> on List<T> {
   void insertAllAndIgnoreDuplicate(List<T> items, dynamic Function(T) field) {
     final map = <dynamic, bool>{};
@@ -12,5 +15,109 @@ extension ListX<T> on List<T> {
     }
 
     insertAll(0, newItems);
+  }
+
+  void replace(T item, T newItem) {
+    final index = indexOf(item);
+    if (index != -1) {
+      this[index] = newItem;
+    }
+  }
+
+  void replaceBy(T newItem, bool Function(T) checkCallback) {
+    final t = checkCallback(newItem);
+    final index = indexWhere((element) => checkCallback(element) == t);
+    if (index != -1) {
+      this[index] = newItem;
+    }
+  }
+
+  bool containsElement(bool Function(T) checkCallback) {
+    return indexWhere((element) => checkCallback(element)) != -1;
+  }
+
+  void reorder(int oldIndex, int newIndex) {
+    final item = removeAt(oldIndex);
+    insert(newIndex > oldIndex ? newIndex - 1 : newIndex, item);
+  }
+
+  bool has(bool Function(T) checkCallback) {
+    return firstWhereOrNull((element) => checkCallback(element)) != null;
+  }
+
+  List<T> sublistIf(int start, int end) {
+    if (start < 0 || end > length) return [];
+    return sublist(start, end);
+  }
+
+  List<T> clone() {
+    return List.from(this);
+  }
+
+  void removeFirstWhere(bool Function(T) checkCallback) {
+    final index = indexWhere((element) => checkCallback(element));
+    if (index != -1) {
+      removeAt(index);
+    }
+  }
+}
+
+extension ListX2<T> on List<T>? {
+  T? get lastOrNull {
+    if (this == null || this!.isEmpty) return null;
+    return this!.last;
+  }
+
+  Map<String, T> toMap(String Function(T) keyCallback) {
+    final map = <String, T>{};
+    for (final item in this ?? []) {
+      map[keyCallback(item)] = item;
+    }
+    return map;
+  }
+
+  Map<E, T> toMap2<E>(E Function(T) keyCallback) {
+    final map = <E, T>{};
+    for (final item in this ?? []) {
+      map[keyCallback(item)] = item;
+    }
+    return map;
+  }
+
+  List<Widget> widgets(Widget Function(T) widgetCallback) {
+    return this?.map((item) => widgetCallback(item)).toList() ?? [];
+  }
+
+  Set<String> toSet(String Function(T) keyCallback) {
+    final set = <String>{};
+    for (final item in this ?? []) {
+      set.add(keyCallback(item));
+    }
+    return set;
+  }
+
+  T? at(int index) {
+    if (index < 0 || this == null || this!.isEmpty || this!.length <= index)
+      return null;
+    return this![index];
+  }
+
+  V safeReduce<V>(V defaultValue, V Function(V, T) combine) {
+    if (this == null || this!.isEmpty) return defaultValue;
+    return this!.fold(defaultValue, combine);
+  }
+}
+
+extension IterableX<T> on Iterable<T> {
+  // T safeReduce(T defaultValue, T Function(T, T) combine) {
+  //   if (isEmpty) return defaultValue;
+  //   return reduce(combine);
+  // }
+
+  T? firstWhereOrNull(bool Function(T) checkCallback) {
+    for (final item in this) {
+      if (checkCallback(item)) return item;
+    }
+    return null;
   }
 }

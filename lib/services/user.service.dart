@@ -1,7 +1,7 @@
 import 'package:core/http.dart';
 
-class UserService {
-  static Future<void> updateUser({
+class UserServiceBase {
+  Future<void> updateUser({
     String? full_name,
     String? avatar,
     String? account_id,
@@ -14,3 +14,5 @@ class UserService {
     return response;
   }
 }
+
+var UserService = UserServiceBase();

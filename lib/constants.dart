@@ -69,5 +69,7 @@ class Constant {
   static const Color green = Color(0xFF0ca37f);
   static const Color red = Color(0xFFc40108);
   static const Color orange = Color(0xFFf57c00);
-  static const Color blue = Color(0xFF2948ff);
+  static const Color blue = Color(0xFF0c79fc);
+  static const Color bottomSheetColor = Color(0xFF142127);
+  static const Color grey = Color(0xFF808080);
 }

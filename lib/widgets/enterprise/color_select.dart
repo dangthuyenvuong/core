@@ -31,16 +31,25 @@ const colors = [
 void showColorSelect({
   required BuildContext context,
   required Function(Color?) onSelect,
+  Color? defaultColor,
+  Color? value,
 }) {
   Modal.showBottomSheet(
     context: context,
-    builder: (context, controller) => ColorSelect(onSelect: onSelect),
+    builder: (context, controller) => ColorSelect(
+      onSelect: onSelect,
+      defaultColor: defaultColor,
+      value: value,
+    ),
   );
 }
 
 class ColorSelect extends StatelessWidget {
-  const ColorSelect({super.key, required this.onSelect});
+  const ColorSelect(
+      {super.key, required this.onSelect, this.defaultColor, this.value});
   final Function(Color?) onSelect;
+  final Color? defaultColor;
+  final Color? value;
 
   @override
   Widget build(BuildContext context) {
@@ -51,14 +60,14 @@ class ColorSelect extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(
-                  "Cancel",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: onSurface.withAlpha(100),
-                  ),
-                ),
+                // Text(
+                //   "Cancel",
+                //   style: TextStyle(
+                //     fontSize: 14,
+                //     fontWeight: FontWeight.bold,
+                //     color: onSurface.withAlpha(100),
+                //   ),
+                // ),
                 Expanded(
                   child: Text(
                     "Choose Color",
@@ -69,14 +78,14 @@ class ColorSelect extends StatelessWidget {
                     ),
                   ),
                 ),
-                Text(
-                  "Save",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepOrange,
-                  ),
-                ),
+                // Text(
+                //   "Save",
+                //   style: TextStyle(
+                //     fontSize: 14,
+                //     fontWeight: FontWeight.bold,
+                //     color: Colors.deepOrange,
+                //   ),
+                // ),
               ],
             ),
             SizedBox(height: Spacing.large),
@@ -93,7 +102,7 @@ class ColorSelect extends StatelessWidget {
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: onSurface.withAlpha(10),
+                      color: defaultColor ?? onSurface.withAlpha(10),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -117,6 +126,14 @@ class ColorSelect extends StatelessWidget {
                         color: colors[index],
                         shape: BoxShape.circle,
                       ),
+                      child: value != null &&
+                              value!.toARGB32() == colors[index].toARGB32()
+                          ? Icon(
+                              CupertinoIcons.checkmark,
+                              size: 20,
+                              color: onSurface,
+                            )
+                          : null,
                     ),
                   ),
                 ),

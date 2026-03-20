@@ -1,7 +1,7 @@
 import 'package:core/constants/api.dart';
 import 'package:core/http.dart';
 import 'package:core/models/feedback.model.dart';
-import 'package:core/utils/sqlite.dart';
+import 'package:core/sqllite/sqlite.dart';
 
 final FeedbackTable = SqlTable<FeedbackModel>(
   fields: [

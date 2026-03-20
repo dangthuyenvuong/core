@@ -242,7 +242,7 @@ class _MenuTemplateScreenState extends State<MenuTemplateScreen>
                 rounded: true,
                 child: Text(tr('Request feature')),
                 onTap: () {
-                  Get.to(() => ReportScreen(
+                  Get.to(() => SendReportScreen(
                         title: tr('Request feature'),
                         leading: Padding(
                           padding: EdgeInsets.only(bottom: Spacing.medium),

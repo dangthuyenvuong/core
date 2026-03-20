@@ -1,0 +1,35 @@
+targets:
+  $default:
+    builders:
+      core|table_builder:
+        generate_for:
+          - core/lib/models/**.dart
+
+      json_serializable:
+        options:
+          # Options configure how source code is generated for every
+          # `@JsonSerializable`-annotated class in the package.
+          #
+          # The default value for each is listed.
+          any_map: true
+          checked: true
+          # constructor: ""
+          # create_factory: true
+          # create_field_map: false
+          # create_json_keys: false
+          # create_per_field_to_json: false
+          # create_to_json: true
+          # disallow_unrecognized_keys: false
+          explicit_to_json: true
+          # field_rename: none
+          # generic_argument_factories: false
+          # ignore_unannotated: false
+          # include_if_null: true
+
+builders:
+  table_builder:
+    import: "package:core/table_builder/builder.dart"
+    builder_factories: ["tableBuilder"]
+    build_extensions: {".dart": [".table.dart"]}
+    auto_apply: dependents
+    build_to: source

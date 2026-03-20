@@ -7,6 +7,49 @@ enum ButtonSize {
   large,
 }
 
+class _BtnStyle {
+  EdgeInsets padding;
+  double radius;
+  double fontSize;
+  double height;
+  double spacing;
+
+  _BtnStyle({
+    required this.padding,
+    required this.radius,
+    required this.fontSize,
+    required this.height,
+    required this.spacing,
+  });
+}
+
+var _btnSize = {
+  SSize.small: _BtnStyle(
+    padding: EdgeInsets.symmetric(
+        horizontal: Spacing.small, vertical: Spacing.xSmall),
+    radius: 4,
+    fontSize: 12,
+    height: 32,
+    spacing: Spacing.small,
+  ),
+  SSize.medium: _BtnStyle(
+    padding: EdgeInsets.symmetric(
+        horizontal: Spacing.small, vertical: Spacing.small),
+    radius: 8,
+    fontSize: 14,
+    height: 40,
+    spacing: Spacing.small,
+  ),
+  SSize.large: _BtnStyle(
+    padding: EdgeInsets.symmetric(
+        horizontal: Spacing.medium, vertical: Spacing.small),
+    radius: 10,
+    fontSize: 16,
+    height: 48,
+    spacing: Spacing.small,
+  ),
+};
+
 enum ButtonColor {
   primary,
   secondary,
@@ -21,26 +64,31 @@ enum ButtonColor {
   transparent
 }
 
-final Map<SSize, EdgeInsets> _sizePadding = {
-  SSize.small:
-      EdgeInsets.symmetric(horizontal: Spacing.small, vertical: Spacing.xSmall),
-  SSize.medium:
-      EdgeInsets.symmetric(horizontal: Spacing.small, vertical: Spacing.small),
-  SSize.large: EdgeInsets.symmetric(
-      horizontal: Spacing.medium, vertical: Spacing.medium),
-};
+// final Map<SSize, EdgeInsets> _sizePadding = {
+//   SSize.small:
+//       EdgeInsets.symmetric(horizontal: Spacing.small, vertical: Spacing.xSmall),
+//   SSize.medium:
+//       EdgeInsets.symmetric(horizontal: Spacing.small, vertical: Spacing.small),
+//   SSize.large: EdgeInsets.symmetric(
+//       horizontal: Spacing.medium, vertical: Spacing.medium),
+// };
 
-final Map<SSize, double> _sizeRadius = {
-  SSize.small: 4,
-  SSize.medium: 8,
-  SSize.large: 10,
-};
+// final Map<SSize, double> _sizeRadius = {
+//   SSize.small: 4,
+//   SSize.medium: 8,
+//   SSize.large: 10,
+// };
 
-final Map<SSize, double> _sizeFontSize = {
-  SSize.small: 12,
-  SSize.medium: 14,
-  SSize.large: 16,
-};
+// final Map<SSize, double> _sizeFontSize = {
+//   SSize.small: 12,
+//   SSize.medium: 14,
+//   SSize.large: 16,
+// };
+// final Map<SSize, double> _btnHeight = {
+//   SSize.small: 32,
+//   SSize.medium: 40,
+//   SSize.large: 48,
+// };
 
 class SButton extends StatelessWidget {
   const SButton({
@@ -95,6 +143,7 @@ class SButton extends StatelessWidget {
       ButtonColor.blue: Colors.blueAccent.shade700,
       ButtonColor.yellow: Colors.yellowAccent.shade700,
       ButtonColor.transparent: Colors.transparent,
+      ButtonColor.white: Colors.white,
     };
 
     final textColorMap = {
@@ -106,11 +155,13 @@ class SButton extends StatelessWidget {
       ButtonColor.primary: onSurface.withAlpha(150),
     };
 
+    final _size = _btnSize[size]!;
+
     final bgDisabled =
         isDarkMode ? Colors.white.withAlpha(10) : Colors.black.withAlpha(10);
 
     final _radius =
-        BorderRadius.circular(radius ?? (rounded ? 999 : _sizeRadius[size]!));
+        BorderRadius.circular(radius ?? (rounded ? 999 : _size.radius));
 
     var _textColor = textColor ??
         (textColorMap[color] ?? Colors.white)?.withAlpha(_disabled ? 100 : 255);
@@ -122,7 +173,7 @@ class SButton extends StatelessWidget {
     return IntrinsicWidth(
       child: Container(
         width: width,
-        height: height,
+        height: height ?? _size.height,
         // width: double.infinity,
         // padding: EdgeInsets.symmetric(horizontal: Spacing.medium),
         constraints: BoxConstraints(minWidth: minWidth ?? 0),
@@ -138,17 +189,17 @@ class SButton extends StatelessWidget {
             borderRadius: _radius,
             onTap: _disabled ? null : onTap,
             child: Padding(
-              padding: padding ?? _sizePadding[size]!,
+              padding: padding ?? _size.padding,
               child: DefaultTextStyle(
                 style: TextStyle(
-                  fontSize: _sizeFontSize[size],
+                  fontSize: _size.fontSize,
                   fontWeight: FontWeight.w600,
                   color: _textColor,
                 ),
                 textAlign: TextAlign.center,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  spacing: Spacing.small,
+                  spacing: _size.spacing,
                   children: [
                     if (loading)
                       SizedBox(
@@ -160,8 +211,7 @@ class SButton extends StatelessWidget {
                         ),
                       ),
                     if (icon != null && !loading)
-                      Icon(icon!,
-                          size: _sizeFontSize[size]!, color: _textColor),
+                      Icon(icon!, size: _size.fontSize, color: _textColor),
                     child,
                   ],
                 ),

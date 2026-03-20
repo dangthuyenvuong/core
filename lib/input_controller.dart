@@ -1,3 +1,4 @@
+import 'package:core/core.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
@@ -6,9 +7,10 @@ abstract class Rule {
 }
 
 class InputController {
-  late TextEditingController controller;
+  late CustomInputController controller;
   final GlobalKey targetKey = GlobalKey();
   List<Rule> rules;
+  final String? suffixText;
   late ValueNotifier<String?> error;
   // String value = '';
   bool isError = false;
@@ -17,12 +19,29 @@ class InputController {
   // String? get error => _error.value;
 
   set text(String value) => controller.text = value;
+  set suffixText(String? value) => controller.suffixText = value;
   set value(String value) => controller.text = value;
   String get value => controller.text;
 
-  InputController({this.rules = const [], value = ''}) {
+  InputController({
+    this.rules = const [],
+    String? value = '',
+    this.suffixText,
+    this.isError = false,
+    bool validateOnInit = false,
+    TextStyle? suffixStyle,
+  }) {
     error = ValueNotifier(null);
-    controller = TextEditingController(text: value);
+    controller = CustomInputController(
+        text: value, suffixText: suffixText, suffixStyle: suffixStyle);
+
+    if (validateOnInit) {
+      validate();
+    }
+  }
+
+  void addListener(Function() listener) {
+    controller.addListener(listener);
   }
 
   void dispose() {
@@ -39,14 +58,14 @@ class InputController {
     error.value = null;
 
     for (var rule in rules) {
-      final err = rule.validate(value);
+      final err = rule.validate(controller.text);
       if (err != null) {
         error.value = err;
         check = false;
         break;
       }
     }
-    isError = check;
+    isError = !check;
     return check;
   }
 

@@ -7,11 +7,13 @@ class SCheckbox extends StatelessWidget {
     this.child,
     required this.value,
     required this.onChanged,
+    this.reverse = false,
   });
 
   final Widget? child;
   final bool value;
-  final Function(bool?) onChanged;
+  final bool reverse;
+  final Function(bool) onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +23,16 @@ class SCheckbox extends StatelessWidget {
       onTap: () {
         onChanged(!value);
       },
+      behavior: HitTestBehavior.opaque,
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          child ?? const SizedBox.shrink(),
+          if (reverse && child != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: child!,
+            ),
           Checkbox(
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             side: BorderSide(color: onSurface.withAlpha(50)),
@@ -33,8 +41,17 @@ class SCheckbox extends StatelessWidget {
             ),
             activeColor: Constant.red,
             value: value,
-            onChanged: onChanged,
+            onChanged: (c) {
+              onChanged.call(c ?? !value);
+            },
           ),
+          if (!reverse && child != null)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: child!,
+              ),
+            ),
         ],
       ),
     );

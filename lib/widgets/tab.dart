@@ -1,3 +1,4 @@
+import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 
@@ -10,6 +11,11 @@ class STab<T> extends StatefulWidget {
     this.init,
     this.width,
     this.value,
+    this.height = 35,
+    this.enabled = true,
+    this.radius = 999,
+    this.indicatorColor,
+    this.backgroundColor,
   });
   final List<T> values;
   final Function(T)? onChanged;
@@ -17,6 +23,11 @@ class STab<T> extends StatefulWidget {
   final T? init;
   final double? width;
   final T? value;
+  final double height;
+  final bool? enabled;
+  final double radius;
+  final Color? indicatorColor;
+  final Color? backgroundColor;
 
   @override
   State<STab<T>> createState() => _STabState<T>();
@@ -43,22 +54,25 @@ class _STabState<T> extends State<STab<T>> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
+    final bg = getBgMode(context);
+    final enabled = widget.enabled ?? true;
     return AnimatedToggleSwitch<T>.size(
       current: _value,
       values: widget.values,
       iconOpacity: 0.5,
       selectedIconScale: 1,
+      borderWidth: 2,
       animationDuration: kThemeAnimationDuration,
-      height: 35,
+      height: widget.height,
       indicatorSize: Size.fromWidth(widget.width ?? 90),
       onChanged: (i) {
+        if (!enabled) return;
         setState(() => _value = i);
         widget.onChanged?.call(i);
       },
       styleBuilder: (i) => ToggleStyle(),
       iconBuilder: (item) {
-        return widget.builder(item);
+        return FittedBox(fit: BoxFit.scaleDown, child: widget.builder(item));
         // return Text(
         //   '$item',
         //   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
@@ -66,9 +80,12 @@ class _STabState<T> extends State<STab<T>> {
       },
       style: ToggleStyle(
         // backgroundColor: Colors.black,
-        indicatorColor: isDarkMode ? Colors.black : Colors.white,
+        indicatorColor:
+            widget.indicatorColor ?? (isDarkMode ? Colors.black : Colors.white),
         borderColor: Colors.transparent,
-        borderRadius: BorderRadius.circular(999),
+        backgroundColor: widget.backgroundColor,
+        borderRadius: BorderRadius.circular(widget.radius),
+        indicatorBorderRadius: BorderRadius.circular(widget.radius - 2),
         // boxShadow: [
         //   BoxShadow(
         //     color: Colors.black26,

@@ -1,3 +1,4 @@
+import 'package:core/extensions/map.dart';
 import 'package:core/services/system.service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -19,6 +20,8 @@ class SystemController extends GetxController with WidgetsBindingObserver {
   final List<GlobalKey<NavigatorState>> navigatorKeys = [];
 
   final Map<String, GlobalKey<NavigatorState>> navigatorMap = {};
+
+  final Map<String, int> _navigatorIndexMap = {};
 
   SystemController(this._systemService);
   final SystemService _systemService;
@@ -75,10 +78,47 @@ class SystemController extends GetxController with WidgetsBindingObserver {
   GlobalKey<NavigatorState> getNavigator(String key) {
     if (navigatorMap[key] == null) {
       // navigatorMap[key] = GlobalKey<NavigatorState>();
+
+      // navigatorIndexMap
       navigatorMap[key] = Get.nestedKey(navigatorMap.length + 1)!;
+
+      _navigatorIndexMap[key] = navigatorMap.length;
     }
+
     return navigatorMap[key]!;
   }
+
+  void to(
+      {required String id,
+      Widget? page,
+      String? routeName,
+      Map<String, String>? arguments}) {
+    // getNavigator(id).currentState.pushNamed(routeName)
+    if (routeName != null) {
+      getNavigator(id).currentState?.pushNamed(routeName, arguments: arguments);
+    }
+
+    if (page != null) {
+      getNavigator(id).currentState?.push(MaterialPageRoute(
+          builder: (context) => page,
+          settings: RouteSettings(arguments: arguments)));
+    }
+  }
+
+  void popToFirst(String id) {
+    Get.back(id: _navigatorIndexMap[id]);
+    // getNavigator(id).currentState?.pop((route) => route.isFirst);
+  }
+
+  Map<String, String?> params(BuildContext context) {
+    final _params = ModalRoute.of(context)?.settings.arguments;
+
+    return _params ?? Get.arguments ?? Get.parameters ?? {};
+  }
+
+  // void clearNavigator() {
+  //   navigatorMap.clear();
+  // }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {

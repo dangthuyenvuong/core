@@ -63,6 +63,7 @@ class _FormScreenState extends State<FormScreen> {
     return Scaffold(
         appBar: SAppBar(
           padding: EdgeInsets.only(left: 16, right: 16),
+          titleCenter: true,
           leading: OpacityTap(
             child: Text(tr("Cancel"),
                 style: TextStyle(fontWeight: FontWeight.bold)),
@@ -116,7 +117,6 @@ class _FormScreenState extends State<FormScreen> {
               );
             }),
           ),
-        )
-        );
+        ));
   }
 }

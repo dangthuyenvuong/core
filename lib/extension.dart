@@ -1,5 +1,6 @@
 import 'dart:math';
-
+import 'package:core/core.dart';
+import 'package:timeago/timeago.dart' as timeago;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -18,8 +19,8 @@ extension ListT<T> on List<T>? {
   List<A> mapV2<A>(A Function(T value, int index) callback) {
     return this
             ?.asMap()
-            ?.entries
-            ?.map((value) => callback(value.value, value.key))
+            .entries
+            .map((value) => callback(value.value, value.key))
             .toList() ??
         [];
   }
@@ -106,11 +107,19 @@ extension MapY<K, V> on Map<K, V> {
 }
 
 extension MapX<K, bool> on Map<K, bool> {
-  void toggle(K key) {
+  void toggle(K key, {remove = false}) {
     if (this[key] == null) {
       this[key] = true as bool;
     } else {
-      this[key] = this[key] == true ? false as bool : true as bool;
+      if (this[key] == true) {
+        if (remove) {
+          this.remove(key);
+        } else {
+          this[key] = false as bool;
+        }
+      } else {
+        this[key] = true as bool;
+      }
     }
   }
 
@@ -126,8 +135,8 @@ extension MapX<K, bool> on Map<K, bool> {
 }
 
 extension NullableStringX on String? {
-  bool isNullOrEmpty() => this == null || this!.isEmpty;
-  bool get isNotNullOrEmpty => this != null && this!.isNotEmpty;
+  bool get isNullOrEmpty => this == null || this!.isEmpty;
+  bool get isNotNullAndEmpty => this != null && this!.isNotEmpty;
   bool checkRequired() => this != null && this!.isNotEmpty;
   String orDefault(String defaultValue) =>
       checkRequired() ? this! : defaultValue;
@@ -157,6 +166,14 @@ extension ColorExtension on Color {
         hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
     return darkerHsl.toColor();
   }
+
+  Color lighter([double amount = 0.1]) {
+    assert(amount >= 0 && amount <= 1, 'amount phải từ 0.0 đến 1.0');
+    final hsl = HSLColor.fromColor(this);
+    final lighterHsl =
+        hsl.withLightness((hsl.lightness + amount).clamp(0.0, 1.0));
+    return lighterHsl.toColor();
+  }
 }
 
 extension BoolX on bool? {
@@ -171,7 +188,60 @@ extension DateTimeX on DateTime {
   DateTime startOfDay() => DateTime(year, month, day, 0, 0, 0, 0);
   DateTime endOfDay() => DateTime(year, month, day, 23, 59, 59, 999);
 
-  String format(String format) => DateFormat(format).format(this);
+  DateTime startOfWeek() =>
+      DateTime(year, month, day - weekday + 1, 0, 0, 0, 0);
+  DateTime endOfWeek() =>
+      DateTime(year, month, day + (7 - weekday), 23, 59, 59, 999);
+
+  bool isAtSameDay(DateTime other) =>
+      year == other.year && month == other.month && day == other.day;
+  bool isAtSameWeek(DateTime other) {
+    return startOfWeek().isAtSameDay(other.startOfWeek());
+  }
+
+  bool isAtSameMonth(DateTime other) =>
+      year == other.year && month == other.month;
+  bool isAtSameYear(DateTime other) => year == other.year;
+
+  String format(String format) {
+    if (format.contains("w")) {
+      final week = this.difference(DateTime(year, 1, 1)).inDays ~/ 7 + 1;
+      return DateFormat(format.replaceAll("w", week.toString())).format(this);
+    }
+
+    return DateFormat(format).format(this);
+  }
+
+  String ago() {
+    final now = DateTime.now();
+    final diff = now.difference(this);
+
+    if (diff.inDays > 365) {
+      return '${diff.inDays ~/ 365} ${"year".tr}';
+    }
+
+    if (diff.inDays > 30) {
+      return '${diff.inDays ~/ 30} ${"month".tr}';
+    }
+
+    if (diff.inDays > 0) {
+      return '${diff.inDays} ${"day".tr}';
+    }
+
+    if (diff.inHours > 0) {
+      return '${diff.inHours} ${"hour".tr}';
+    }
+
+    if (diff.inMinutes > 0) {
+      return '${diff.inMinutes} ${"minute".tr}';
+    }
+
+    // if (diff.inSeconds > 0) {
+    //   return '${diff.inSeconds} ${"second".tr}';
+    // }
+
+    return '${"just now".tr}';
+  }
 }
 
 extension AlignmentX on Alignment {
@@ -195,4 +265,13 @@ extension AlignmentX on Alignment {
       this == Alignment.centerLeft ||
       this == Alignment.centerRight ||
       this == Alignment.center;
+}
+
+extension ObjectX on Object? {
+  V? get<V>(String key) {
+    if (this is Map<String, dynamic>) {
+      return (this as Map<String, dynamic>)[key] as V?;
+    }
+    return null;
+  }
 }

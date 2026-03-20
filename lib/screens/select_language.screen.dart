@@ -11,11 +11,12 @@ class LangOpt {
 }
 
 class ScreenSelectLanguage extends StatefulWidget {
-  const ScreenSelectLanguage(
-      {super.key,
-      required this.languages,
-      required this.defaultLanguage,
-      this.onChanged});
+  const ScreenSelectLanguage({
+    super.key,
+    required this.languages,
+    this.defaultLanguage = 'en',
+    this.onChanged,
+  });
   final List<LangOpt> languages;
   final String defaultLanguage;
 
@@ -33,7 +34,7 @@ class _ScreenSelectLanguageState extends State<ScreenSelectLanguage> {
   void initState() {
     super.initState();
     setState(() {
-      selectedLanguage = Get.locale?.languageCode ?? widget.defaultLanguage;
+      selectedLanguage = getLanguageCode(defaultValue: widget.defaultLanguage);
     });
   }
 
@@ -44,20 +45,21 @@ class _ScreenSelectLanguageState extends State<ScreenSelectLanguage> {
       appBar: SAppBar(
         borderBottom: true,
         padding: EdgeInsets.only(left: 16, right: 16),
+        titleCenter: true,
         leading: OpacityTap(
           child:
               Text(tr("Cancel"), style: TextStyle(fontWeight: FontWeight.bold)),
           onTap: () {
-            Navigator.pop(context);
+            Get.back(result: getLanguageCode());
           },
         ),
         actions: [
           OpacityTap(
-            disabled: !enabledSave,
-            child: Text(tr("Done"),
+            // disabled: !enabledSave,
+            child: Text(tr("Save"),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: enabledSave ? Constant.red : Colors.grey,
+                  color: Constant.red,
                 )),
             onTap: () async {
               // final newLocale = selectedLanguage == 'English'
@@ -65,8 +67,9 @@ class _ScreenSelectLanguageState extends State<ScreenSelectLanguage> {
               //     : Locale('vi', 'VN');
               await context.setLocale(Locale(selectedLanguage));
               Get.updateLocale(Locale(selectedLanguage));
-              Navigator.pop(context);
-              widget.onChanged?.call(widget.languages.firstWhere((element) => element.code == selectedLanguage));
+              Get.back(result: selectedLanguage);
+              widget.onChanged?.call(widget.languages
+                  .firstWhere((element) => element.code == selectedLanguage));
             },
           )
         ],
@@ -90,7 +93,7 @@ class _ScreenSelectLanguageState extends State<ScreenSelectLanguage> {
                   onTap: () {
                     setState(() {
                       selectedLanguage = widget.languages[index].code;
-                      enabledSave = true;
+                      // enabledSave = true;
                     });
                   },
                   child: Container(
@@ -130,4 +133,12 @@ class _ScreenSelectLanguageState extends State<ScreenSelectLanguage> {
       ),
     );
   }
+}
+
+String getLanguageCode({String? defaultValue}) {
+  return Get.locale?.languageCode ?? defaultValue ?? 'en';
+}
+
+bool isEnglish() {
+  return getLanguageCode() == 'en';
 }

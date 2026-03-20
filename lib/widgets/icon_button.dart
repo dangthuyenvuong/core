@@ -11,12 +11,13 @@ class SIconButton extends StatelessWidget {
     this.onTap,
     this.text,
     this.splashColor,
-    this.paddingX = 8,
-    this.paddingY = 8,
+    this.paddingX,
+    this.paddingY,
     this.bgColor,
     this.textColor,
     this.package,
     this.disabled = false,
+    this.padding = 8,
   });
 
   final String? svgPath;
@@ -25,8 +26,9 @@ class SIconButton extends StatelessWidget {
   final double? size;
   final String? text;
   final Color? splashColor;
-  final double paddingX;
-  final double paddingY;
+  final double? paddingX;
+  final double? paddingY;
+  final double padding;
   final Color? bgColor;
   final Color? textColor;
   final void Function()? onTap;
@@ -59,7 +61,8 @@ class SIconButton extends StatelessWidget {
                 borderRadius: BorderRadius.circular(100),
               ),
               padding: EdgeInsets.symmetric(
-                  horizontal: paddingX!, vertical: paddingY!),
+                  horizontal: paddingX ?? padding,
+                  vertical: paddingY ?? padding),
               child: Builder(builder: (context) {
                 if (svgPath != null) {
                   return SvgPicture.asset(

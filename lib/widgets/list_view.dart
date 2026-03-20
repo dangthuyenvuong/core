@@ -29,3 +29,25 @@ class SListViewBuilder extends StatelessWidget {
     );
   }
 }
+
+class SList extends StatelessWidget {
+  const SList(
+      {super.key,
+      this.rowCount = 1,
+      this.columnCount,
+      required this.itemBuilder,
+      this.children});
+  final int rowCount;
+  final int? columnCount;
+  final Widget Function(BuildContext, int)? itemBuilder;
+  final List<Widget>? children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+        // children: rowCount > 1
+        //     ? List.generate(children, (index) => SizedBox(height: spacing))
+        //     : [],
+        );
+  }
+}

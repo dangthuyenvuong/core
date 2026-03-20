@@ -7,11 +7,15 @@ class STitle extends StatelessWidget {
     this.subTitle,
     this.titleWidget,
     this.action,
+    this.fontSize = 24,
+    this.textAlign,
   });
   final Widget? titleWidget;
   final String? title;
   final String? subTitle;
   final Widget? action;
+  final double? fontSize;
+  final TextAlign? textAlign;
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +27,7 @@ class STitle extends StatelessWidget {
           children: [
             Expanded(
               child: DefaultTextStyle(
+                  textAlign: textAlign,
                   style: TextStyle(
                     fontSize: 24,
                     letterSpacing: -0.5,
@@ -32,7 +37,7 @@ class STitle extends StatelessWidget {
                   child: titleWidget ??
                       Text(title!,
                           style: TextStyle(
-                            fontSize: 24,
+                            fontSize: fontSize ?? 24,
                             letterSpacing: -0.5,
                             fontWeight: FontWeight.bold,
                           ))),
