@@ -11,15 +11,16 @@ extension CoreX on CoreBase {
       preventDuplicates = true,
       bool replace = false}) async {
     if (replace) {
-      return Get.off(page,
-          fullscreenDialog: fullscreenDialog,
-          transition: transition,
-          duration: duration,
-          preventDuplicates: preventDuplicates,
-          gestureWidth: gestureWidthRatio != null
-              ? (context) =>
-                  gestureWidthRatio * MediaQuery.of(context).size.width
-              : null);
+      return Get.off(
+        page,
+        fullscreenDialog: fullscreenDialog,
+        transition: transition,
+        duration: duration,
+        preventDuplicates: preventDuplicates,
+        gestureWidth: gestureWidthRatio != null
+            ? (context) => gestureWidthRatio * MediaQuery.of(context).size.width
+            : null,
+      );
     } else {
       return Get.to(page,
           fullscreenDialog: fullscreenDialog,

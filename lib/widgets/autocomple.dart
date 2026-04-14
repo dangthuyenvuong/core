@@ -121,6 +121,7 @@ class SAutocomplete<T extends Object> extends StatefulWidget {
     this.isExactMatch = false,
     required this.compare,
     this.autofocus = false,
+    this.onFilter,
   });
   // final FutureOr<Iterable<T>> Function(TextEditingValue) optionsBuilder;
   final String? hintText;
@@ -133,6 +134,7 @@ class SAutocomplete<T extends Object> extends StatefulWidget {
   final List<T> options;
   final bool Function(String value, T item) compare;
   final bool autofocus;
+  final List<T> Function()? onFilter;
 
   @override
   State<SAutocomplete> createState() => _SAutocompleteState<T>();
@@ -176,7 +178,12 @@ class _SAutocompleteState<T extends Object> extends State<SAutocomplete<T>> {
     final bg = Theme.of(context).scaffoldBackgroundColor;
     return Autocomplete<T>(
       optionsBuilder: (value) {
-        final res = widget.options.where((option) {
+        var options = widget.options;
+        if (widget.onFilter != null) {
+          options = widget.onFilter!();
+        }
+
+        final res = options.where((option) {
           return widget.compare(value.text, option);
         });
         _options = res;

@@ -201,7 +201,8 @@ class Http {
     Map<String, dynamic>? queries,
   }) {
     final _queries = Map<String, dynamic>.from(queries ?? {})
-      ..removeWhere((key, value) => value == null || value == '');
+      ..removeWhere((key, value) => value == null || value == '')
+      ..map((key, value) => MapEntry(key, value.toString()));
 
     final query = Uri(queryParameters: _queries).query;
     if (url.startsWith('http')) {

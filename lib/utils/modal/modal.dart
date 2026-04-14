@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:core/core.dart';
@@ -286,36 +287,34 @@ class _Modal {
                     )
                   : _BottomSheetWraper(
                       bgColor: bgColor,
-                      child: SafeArea(
-                        child: IntrinsicHeight(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            // crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _Top(),
-                              if (title != null) _Title(title),
-                              if (leading != null) ...[
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: Spacing.medium, vertical: 8),
-                                  child: leading,
-                                ),
-                                // SizedBox(height: 4),
-                                Divider(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .surface
-                                      .withAlpha(50),
-                                ),
-                                SizedBox(height: 8),
-                              ],
-                              Expanded(
-                                child: SizedBox(
-                                    width: double.infinity,
-                                    child: builder!(context, null)),
-                              )
+                      child: IntrinsicHeight(
+                        child: Column(
+                          // mainAxisSize: MainAxisSize.min,
+                          // crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _Top(),
+                            if (title != null) _Title(title),
+                            if (leading != null) ...[
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: Spacing.medium, vertical: 8),
+                                child: leading,
+                              ),
+                              // SizedBox(height: 4),
+                              Divider(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surface
+                                    .withAlpha(50),
+                              ),
+                              SizedBox(height: 8),
                             ],
-                          ),
+                            Expanded(
+                              child: SizedBox(
+                                  width: double.infinity,
+                                  child: builder!(context, null)),
+                            ),
+                          ],
                         ),
                       )),
             ),
@@ -1321,7 +1320,10 @@ class ActionSheetWraper extends StatelessWidget {
               spacing: Spacing.small,
               children: children,
             ),
-          )
+          ),
+          SizedBox(
+              height:
+                  max(MediaQuery.of(context).padding.bottom, Spacing.medium)),
         ],
       ),
     );
@@ -1376,6 +1378,7 @@ class ActionSheet extends StatelessWidget {
     this.isDestructive = false,
     this.radioButton = false,
     this.selected = false,
+    this.onChangedChecked,
   });
   final Widget? icon;
   final Widget? title;
@@ -1387,6 +1390,7 @@ class ActionSheet extends StatelessWidget {
   final bool isDestructive;
   bool radioButton;
   bool selected;
+  Function(bool)? onChangedChecked;
 
   @override
   Widget build(BuildContext context) {
@@ -1450,7 +1454,9 @@ class ActionSheet extends StatelessWidget {
                   child: CupertinoSwitch(
                     applyTheme: true,
                     value: checked!,
-                    onChanged: (value) {},
+                    onChanged: (value) {
+                      onChangedChecked?.call(value);
+                    },
                   ),
                 ),
               ),
@@ -1461,7 +1467,6 @@ class ActionSheet extends StatelessWidget {
                 borderColor: onSurface.withAlpha(30),
                 unCheckedColor: onSurface.withAlpha(30),
                 checked: selected,
-                // onChanged: (value) {},
               )
           ],
         ),

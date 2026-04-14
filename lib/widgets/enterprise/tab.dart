@@ -46,6 +46,9 @@ class _ETabState extends State<ETab> with TickerProviderStateMixin {
   late TabController tabController;
   // late int itemCount;
 
+  final disabledTabs = [1, 3]; // index các tab bị disable
+  int previousIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -53,6 +56,16 @@ class _ETabState extends State<ETab> with TickerProviderStateMixin {
     tabController = widget.controller ??
         TabController(
             length: itemCount, vsync: this, initialIndex: widget.initialIndex);
+
+    // tabController.addListener(() {
+    //   if (tabController.indexIsChanging) {
+    //     if (disabledTabs.contains(tabController.index)) {
+    //       tabController.index = previousIndex; // revert lại
+    //     } else {
+    //       previousIndex = tabController.index;
+    //     }
+    //   }
+    // });
   }
 
   @override
@@ -123,12 +136,15 @@ class _ETabState extends State<ETab> with TickerProviderStateMixin {
                 fontWeight: FontWeight.w600,
                 // letterSpacing: -,
                 // color: onSurface,
-              ).copyWith(
-                color: widget.style.color,
-                fontSize: widget.style.fontSize,
-                fontWeight: widget.style.fontWeight,
-                letterSpacing: widget.style.letterSpacing,
-              ),
+              ).merge(widget.style),
+
+              //.copyWith(
+              //   color: widget.style.color,
+              //   fontSize: widget.style.fontSize,
+              //   fontWeight: widget.style.fontWeight,
+              //   letterSpacing: widget.style.letterSpacing,
+              // ),
+
               // padding: tabBarOption?.padding,
               // indicatorPadding: EdgeInsets.only(bottom: 10),
 
@@ -148,6 +164,7 @@ class _ETabState extends State<ETab> with TickerProviderStateMixin {
                 HapticFeedback.mediumImpact();
                 widget.onChangedTab?.call(index);
               },
+
               // onTap: widget.onTabChanged,
               tabs: List.generate(
                 len,

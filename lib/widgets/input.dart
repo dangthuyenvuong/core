@@ -88,10 +88,16 @@ class IntFormatter extends TextInputFormatter {
   // Regex phát hiện string bắt đầu bằng nhiều '0' rồi theo sau 1 digit (không phải dấu thập phân)
   late RegExp leadingZerosThenDigit;
 
-  IntFormatter() {
-    validRegex = RegExp(
-      r'^([1-9]\d*)$',
-    );
+  IntFormatter({bool allowZero = true}) {
+    if (allowZero) {
+      validRegex = RegExp(
+        r'^(0|[1-9]\d*)$',
+      );
+    } else {
+      validRegex = RegExp(
+        r'^([1-9]\d*)$',
+      );
+    }
 
     leadingZerosThenDigit = RegExp(
       r'^0+([1-9]\d*)$',
@@ -144,8 +150,8 @@ class SInputFormat {
     return DecimalFormatter(maxDecimal: maxDecimal, min: min);
   }
 
-  static TextInputFormatter intFormatter() {
-    return IntFormatter();
+  static TextInputFormatter intFormatter({bool allowZero = true}) {
+    return IntFormatter(allowZero: allowZero);
   }
 }
 

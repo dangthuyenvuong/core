@@ -3,8 +3,8 @@ extension MapX<K, V> on Map<K, V>? {
     return this?.values.toList() ?? [];
   }
 
-  Map<String, dynamic> mergeSkipNull(Map a) {
-    final result = Map<String, dynamic>.from(this ?? {});
+  Map<K, V> mergeSkipNull(Map a) {
+    final result = Map<K, V>.from(this ?? {});
 
     a.forEach((key, value) {
       if (value != null) {
@@ -15,8 +15,8 @@ extension MapX<K, V> on Map<K, V>? {
     return result;
   }
 
-  Map<String, dynamic> mergeSkipFalsy(Map a) {
-    final result = Map<String, dynamic>.from(this ?? {});
+  Map<K, V> mergeSkipFalsy(Map a) {
+    final result = Map<K, V>.from(this ?? {});
 
     a.forEach((key, value) {
       if (!isFalsyValue(value)) {

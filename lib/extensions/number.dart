@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
@@ -34,6 +36,18 @@ extension NumberX on num {
 
   num defaultZeroValue(num value) {
     if (this == 0) {
+      return value;
+    }
+    return this;
+  }
+
+  double floorTo(int fractionDigits) {
+    final factor = pow(10, fractionDigits);
+    return (this * factor).floorToDouble() / factor;
+  }
+
+  num naNSafe(num value) {
+    if (isNaN) {
       return value;
     }
     return this;

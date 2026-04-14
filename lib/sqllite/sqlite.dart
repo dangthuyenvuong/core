@@ -572,10 +572,15 @@ ${fields.map((field) => field.name).join(', ')}, ${QUERY_FIELD}
   }
 
   Future<void> syncLocal(T data) async {
-    final db = await database;
+    // final db = await database;
     final dataUpdate = {..._toJson(data), "sync_status": "pending"};
-    await db.insert(name, dataUpdate,
-        conflictAlgorithm: ConflictAlgorithm.replace);
+
+    final check = await findById(dataUpdate['id']! as String);
+    if (check == null) {
+      await insert(data);
+    } else {
+      await update(data);
+    }
   }
 
   Future<void> update(T data) async {

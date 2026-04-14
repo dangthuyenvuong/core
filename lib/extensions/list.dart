@@ -50,7 +50,10 @@ extension ListX<T> on List<T> {
     return sublist(start, end);
   }
 
-  List<T> clone() {
+  List<T> clone({T Function(T)? cloneCallback}) {
+    if (cloneCallback != null) {
+      return map((e) => cloneCallback(e)).toList();
+    }
     return List.from(this);
   }
 
@@ -74,6 +77,18 @@ extension ListX2<T> on List<T>? {
       map[keyCallback(item)] = item;
     }
     return map;
+  }
+
+  List<T> filter(bool Function(T) checkCallback) {
+    return this?.where(checkCallback).toList() ?? [];
+  }
+
+  Set<E> toSet2<E>(E Function(T) keyCallback) {
+    final set = <E>{};
+    for (final item in this ?? []) {
+      set.add(keyCallback(item));
+    }
+    return set;
   }
 
   Map<E, T> toMap2<E>(E Function(T) keyCallback) {
@@ -105,6 +120,10 @@ extension ListX2<T> on List<T>? {
   V safeReduce<V>(V defaultValue, V Function(V, T) combine) {
     if (this == null || this!.isEmpty) return defaultValue;
     return this!.fold(defaultValue, combine);
+  }
+
+  int count(bool Function(T) checkCallback) {
+    return this?.where(checkCallback).length ?? 0;
   }
 }
 
